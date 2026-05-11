@@ -1,0 +1,76 @@
+.hero-wrapper .carousel,
+.hero-wrapper .carousel-inner,
+.hero-wrapper .carousel-item {
+    height: 300px;
+    /* 450 * 2/3 = 300px */
+}
+
+.hero-wrapper .carousel-item img {
+    height: 100%;
+    object-fit: cover;
+}
+
+.hero-slider-container {
+    height: 350px;
+}
+
+.carousel-item img {
+    height: 100%;
+    object-fit: cover;
+    border-radius: 15px;
+}
+
+.promo-banner {
+    height: calc(50% - 10px);
+    background-size: cover;
+    border-radius: 15px;
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    padding: 20px;
+    transition: 0.3s;
+    color: white;
+    margin-bottom: 10px;
+}
+
+.promo-banner::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.2);
+}
+
+.promo-banner div {
+    position: relative;
+    z-index: 2;
+}
+
+.product-card {
+    border: 1px solid var(--bs-secondary);
+    border-radius: 15px;
+    overflow: hidden;
+    transition: 0.3s;
+}
+
+.product-img {
+    height: 200px;
+    object-fit: cover;
+    width: 100%;
+}
+
+.cat-item {
+    text-align: center;
+    padding: 20px;
+    border-radius: 12px;
+    background: var(--bg-light);
+    text-decoration: none;
+    color: var(--bs-blue);
+    display: block;
+    transition: 0.3s;
+}
+
+.cat-item:hover {
+    background: var(--bs-primary);
+    color: #fff;
+}

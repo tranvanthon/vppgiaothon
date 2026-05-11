@@ -1,0 +1,58 @@
+{% if banners %}
+  <div class="hero-wrapper py-3">
+    <div class="container">
+      <div class="row g-3">
+        <!-- Banner Chính (Carousel) -->
+        <div class="col-lg-9">
+          <div id="mainCarousel" class="carousel slide h-100 shadow-sm overflow-hidden rounded-4" data-bs-ride="carousel" >
+            <!-- Tự động tạo Indicators dựa trên số lượng banner -->
+            <div class="carousel-indicators">
+              {% for banner in banners %}
+                <button type="button" data-bs-target="#mainCarousel" data-bs-slide-to="{{ forloop.counter0 }}" {% if forloop.first %}class="active" aria-current="true"{% endif %}></button>
+              {% endfor %}
+            </div>
+
+            <div class="carousel-inner h-100">
+              {% for banner in banners %}
+                <div class="carousel-item h-100 {% if forloop.first %}active{% endif %}" data-bs-interval="5000">
+                  <img src="{{ banner.image.url }}" class="d-block w-100 h-100 object-fit-cover" alt="{{ banner.name }}" />
+                  <div class="carousel-caption d-none d-md-block text-start pb-5">
+                    <h2 class="display-5 fw-bold text-white">{{ banner.name }}</h2>
+                    <!-- Hiển thị mô tả động từ model nếu có -->
+                    <p>{{ banner.decristion_short|default:"Khám phá ngay ưu đãi hấp dẫn hôm nay." }}</p>
+                    <a href="{{ banner.link|default:'#' }}" class="btn btn-primary px-4 rounded-pill">Mua ngay</a>
+                  </div>
+                </div>
+              {% endfor %}
+            </div>
+
+            <!-- Nút điều hướng -->
+            <button class="carousel-control-prev" type="button" data-bs-target="#mainCarousel" data-bs-slide="prev">
+              <span class="carousel-control-prev-icon"></span>
+            </button>
+            <button class="carousel-control-next" type="button" data-bs-target="#mainCarousel" data-bs-slide="next">
+              <span class="carousel-control-next-icon"></span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Banner Phụ bên phải (Có thể giữ cố định hoặc thay bằng ảnh tĩnh khác) -->
+        <div class="col-lg-3 d-none d-lg-flex flex-column gap-3">
+          <div class="promo-banner flex-grow-1 rounded-4 shadow-sm position-relative overflow-hidden" style="background: url('https://images.unsplash.com/photo-1610945265064-0e34e5519bbf?w=400') center/cover;">
+            <div class="position-absolute bottom-0 start-0 p-3 bg-dark bg-opacity-50 w-100 text-white">
+              <h6 class="mb-1">Galaxy S24</h6>
+              <span class="badge bg-warning text-dark">Giá sốc</span>
+            </div>
+          </div>
+          <div class="promo-banner flex-grow-1 rounded-4 shadow-sm position-relative overflow-hidden" style="background: url('https://images.unsplash.com/photo-1544244015-0df4b3ffc6b0?w=400') center/cover;">
+            <div class="position-absolute bottom-0 start-0 p-3 bg-dark bg-opacity-50 w-100 text-white">
+              <h6 class="mb-1">iPad Air M2</h6>
+              <span class="badge bg-primary">Xem ngay</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+{% endif %}
+

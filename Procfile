@@ -1,0 +1,1 @@
+web: gunicorn Gt_django_wed.wsgi
