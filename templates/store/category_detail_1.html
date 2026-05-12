@@ -1,0 +1,384 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ page_title }}{% endblock %}
+{% block meta_description %}{{ meta_description }}{% endblock %}
+
+{% block navbar %}
+    {% include 'partials/navbar.html' %}
+{% endblock navbar %}
+  
+{% block content %}
+<div class="category-container bg-light">
+    <div class="container">
+        <!-- Breadcrumb (Đã có sẵn theo cấu trúc của bạn) -->
+        <nav aria-label="breadcrumb" class="mb-4 pt-3">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item">
+                    <a href="/" class="text-decoration-none text-primary">Trang chủ</a>
+             </li>
+                {% for name, url in custom_breadcrumb.items %}
+                    {% if not forloop.last %}
+                        <li class="breadcrumb-item">
+                            <a href="{{ url }}" class="text-decoration-none text-primary">{{ name }}</a>
+                        </li>
+                    {% else %}
+                        <li class="breadcrumb-item active" aria-current="page">{{ name }}</li>
+                    {% endif %}
+                {% endfor %}
+            </ol>
+        </nav>
+
+        <div class="row g-4">
+            <!-- Sidebar lọc sản phẩm -->
+            <aside class="col-lg-3">
+                <!-- Nút mở filter trên mobile -->
+                <div class="d-md-none mb-3">
+                    <button class="btn btn-outline-primary w-100" type="button" data-bs-toggle="offcanvas" data-bs-target="#mobileFilter">
+                        <i class="bi bi-funnel me-2"></i>Bộ lọc & Tìm kiếm
+                    </button>
+                </div>
+
+                <!-- Filter Sidebar (Desktop) -->
+                <div class="filter-sidebar shadow-sm d-none d-lg-block">
+                    <h5 class="fw-bold mb-4"><i class="bi bi-funnel me-2"></i>Bộ lọc</h5>
+
+                    <!-- Lọc theo thương hiệu -->
+                    <div class="filter-group">
+                        <div class="filter-title">Thương hiệu</div>
+                        {% for brand in brands %}
+                        <div class="form-check mb-2">
+                            <input class="form-check-input filter-checkbox" 
+                                   type="checkbox" 
+                                   name="brand" 
+                                   value="{{ brand.slug }}"
+                                   id="brand_{{ brand.slug }}"
+                                   {% if brand.slug == current_brand %}checked{% endif %}
+                                   onchange="applyFilters()">
+                            <label class="form-check-label small" for="brand_{{ brand.slug }}">
+                                {{ brand.name }}
+                            </label>
+                        </div>
+                        {% empty %}
+                        <p class="text-muted small">Chưa có thương hiệu</p>
+                        {% endfor %}
+                    </div>
+
+                    <!-- Lọc theo khoảng giá -->
+                    <div class="filter-group">
+                        <div class="filter-title">Khoảng giá</div>
+                        <div class="d-flex align-items-center gap-2 mb-3">
+                            <input type="number" 
+                                   class="form-control form-control-sm" 
+                                   id="min_price" 
+                                   placeholder="Từ"
+                                   value="{{ current_min_price }}">
+                            <span>-</span>
+                            <input type="number" 
+                                   class="form-control form-control-sm" 
+                                   id="max_price" 
+                                   placeholder="Đến"
+                                   value="{{ current_max_price }}">
+                        </div>
+                        <div class="list-group list-group-flush">
+                            <a href="#" class="list-group-item list-group-item-action border-0 px-0 small text-muted" onclick="setPriceRange(0, 5000000); return false;">Dưới 5 triệu</a>
+                            <a href="#" class="list-group-item list-group-item-action border-0 px-0 small text-muted" onclick="setPriceRange(5000000, 15000000); return false;">5 - 15 triệu</a>
+                            <a href="#" class="list-group-item list-group-item-action border-0 px-0 small text-muted" onclick="setPriceRange(15000000, 100000000); return false;">Trên 15 triệu</a>
+                        </div>
+                    </div>
+
+                    <!-- Lọc theo đánh giá -->
+                    <div class="filter-group">
+                        <div class="filter-title">Đánh giá</div>
+                        <div class="text-warning small">
+                            <i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i>
+                            <span class="text-muted">(Từ 4 sao)</span>
+                        </div>
+                    </div>
+
+                    <button class="btn btn-primary w-100 mt-3 rounded-pill" onclick="applyFilters()">Áp dụng</button>
+                </div>
+            </aside>
+
+            <!-- Main Content: Danh sách sản phẩm -->
+            <main class="col-lg-9">
+                <!-- Sort Bar -->
+                <div class="sort-bar shadow-sm d-flex justify-content-between align-items-center">
+                    <h5 class="fw-bold mb-0">
+                        {{ category.name }} 
+                        <span class="text-muted fw-normal small">({{ page_obj.paginator.count }} sản phẩm)</span>
+                    </h5>
+                    <div class="d-flex align-items-center gap-3">
+                        <label class="small text-muted d-none d-md-block">Sắp xếp:</label>
+                        <select class="form-select form-select-sm border-0 bg-light" id="sort_select" onchange="applySort()" style="width: auto;">
+                            <option value="" {% if not current_sort %}selected{% endif %}>Mới nhất</option>
+                            <option value="price_asc" {% if current_sort == 'price_asc' %}selected{% endif %}>Giá thấp đến cao</option>
+                            <option value="price_desc" {% if current_sort == 'price_desc' %}selected{% endif %}>Giá cao đến thấp</option>
+                            <option value="name_asc" {% if current_sort == 'name_asc' %}selected{% endif %}>Tên A-Z</option>
+                            <option value="name_desc" {% if current_sort == 'name_desc' %}selected{% endif %}>Tên Z-A</option>
+                            <option value="bestseller" {% if current_sort == 'bestseller' %}selected{% endif %}>Bán chạy nhất</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Products Grid -->
+                {% if products %}
+                <div class="row g-4">
+                    {% for product in products %}
+                    <div class="col-6 col-md-4">
+                        <div class="product-card bg-white h-100 shadow-sm border-0">
+                            <div class="position-relative">
+                                {% with product.images.all|first as main_image %}
+                                    {% if main_image %}
+                                        <img src="{{ main_image.imageURL }}" class="product-img w-100" alt="{{ product.name }}">
+                                    {% else %}
+                                        <img src="/static/images/default-product.png" class="product-img w-100" alt="{{ product.name }}">
+                                    {% endif %}
+                                {% endwith %}
+                                <button class="btn btn-sm btn-light position-absolute top-0 end-0 m-2 rounded-circle shadow-sm">
+                                    <i class="bi bi-heart"></i>
+                                </button>
+                            </div>
+                            <div class="p-3">
+                                <h6 class="fw-bold mb-1 text-truncate">{{ product.name }}</h6>
+                                <div class="text-warning small mb-2">
+                                    <i class="bi bi-star-fill"></i> 4.9 
+                                    <span class="text-muted">(120 đánh giá)</span>
+                                </div>
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <span class="fw-bold text-primary">{{ product.price|floatformat:0 }}đ</span>
+                                    <button class="btn btn-sm btn-primary rounded-pill px-3">Mua</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+
+                <!-- Pagination -->
+                <!-- ✅ SỬA PAGINATOR - Giữ lại tất cả filter params -->
+                {% if page_obj.has_other_pages %}
+                <nav class="mt-5">
+                    <ul class="pagination justify-content-center">
+                        {% if page_obj.has_previous %}
+                        <li class="page-item">
+                            <a class="page-link border-0 rounded-circle mx-1" 
+                               href="?page={{ page_obj.previous_page_number }}{% if request.GET.brand %}&brand={{ request.GET.brand }}{% endif %}{% if request.GET.max_price %}&max_price={{ request.GET.max_price }}{% endif %}{% if request.GET.min_price %}&min_price={{ request.GET.min_price }}{% endif %}{% if request.GET.sort %}&sort={{ request.GET.sort }}{% endif %}">
+                                <i class="bi bi-chevron-left"></i>
+                            </a>
+                        </li>
+                        {% else %}
+                        <li class="page-item disabled">
+                            <a class="page-link border-0 rounded-circle mx-1" href="#">
+                                <i class="bi bi-chevron-left"></i>
+                            </a>
+                        </li>
+                        {% endif %}
+
+                        {% for page_num in page_obj.paginator.page_range %}
+                            {% if page_obj.number == page_num %}
+                            <li class="page-item active">
+                                <a class="page-link border-0 rounded-circle mx-1 bg-primary" href="#">{{ page_num }}</a>
+                            </li>
+                            {% elif page_num > page_obj.number|add:'-3' and page_num < page_obj.number|add:'3' %}
+                            <li class="page-item">
+                                <a class="page-link border-0 rounded-circle mx-1" 
+                                   href="?page={{ page_num }}{% if request.GET.brand %}&brand={{ request.GET.brand }}{% endif %}{% if request.GET.max_price %}&max_price={{ request.GET.max_price }}{% endif %}{% if request.GET.min_price %}&min_price={{ request.GET.min_price }}{% endif %}{% if request.GET.sort %}&sort={{ request.GET.sort }}{% endif %}">
+                                    {{ page_num }}
+                                </a>
+                            </li>
+                            {% endif %}
+                        {% endfor %}
+
+                        {% if page_obj.has_next %}
+                        <li class="page-item">
+                            <a class="page-link border-0 rounded-circle mx-1" 
+                               href="?page={{ page_obj.next_page_number }}{% if request.GET.brand %}&brand={{ request.GET.brand }}{% endif %}{% if request.GET.max_price %}&max_price={{ request.GET.max_price }}{% endif %}{% if request.GET.min_price %}&min_price={{ request.GET.min_price }}{% endif %}{% if request.GET.sort %}&sort={{ request.GET.sort }}{% endif %}">
+                                <i class="bi bi-chevron-right"></i>
+                            </a>
+                        </li>
+                        {% else %}
+                        <li class="page-item disabled">
+                            <a class="page-link border-0 rounded-circle mx-1" href="#">
+                                <i class="bi bi-chevron-right"></i>
+                            </a>
+                        </li>
+                        {% endif %}
+                    </ul>
+                </nav>
+                {% endif %}
+                <!-- Không có sản phẩm -->
+                <div class="text-center py-5 bg-white rounded-3">
+                    <i class="bi bi-box-seam display-1 text-muted"></i>
+                    <h4 class="mt-3">Không tìm thấy sản phẩm</h4>
+                    <p class="text-muted">Vui lòng thử lại với bộ lọc khác.</p>
+                </div>
+                {% endif %}
+            </main>
+        </div>
+    </div>
+</div>
+
+<!-- Mobile Filter Offcanvas -->
+<div class="offcanvas offcanvas-start d-lg-none" tabindex="-1" id="mobileFilter">
+    <div class="offcanvas-header border-bottom">
+        <h5 class="offcanvas-title fw-bold">Bộ lọc sản phẩm</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="offcanvas"></button>
+    </div>
+    <div class="offcanvas-body">
+        <div class="filter-group">
+            <div class="filter-title">Thương hiệu</div>
+            {% for brand in brands %}
+            <div class="form-check mb-2">
+                <input class="form-check-input filter-checkbox" type="checkbox" name="brand" value="{{ brand.slug }}" id="mobile_brand_{{ brand.slug }}">
+                <label class="form-check-label small" for="mobile_brand_{{ brand.slug }}">{{ brand.name }}</label>
+            </div>
+            {% endfor %}
+        </div>
+        <div class="filter-group">
+            <div class="filter-title">Khoảng giá</div>
+            <div class="d-flex gap-2 mb-2">
+                <input type="number" class="form-control form-control-sm" id="mobile_min_price" placeholder="Từ">
+                <input type="number" class="form-control form-control-sm" id="mobile_max_price" placeholder="Đến">
+            </div>
+        </div>
+        <button class="btn btn-primary w-100 mt-3 rounded-pill" onclick="applyMobileFilters()" data-bs-dismiss="offcanvas">Áp dụng</button>
+    </div>
+</div>
+
+<script>
+// Lấy các tham số hiện tại từ URL
+const urlParams = new URLSearchParams(window.location.search);
+
+function applyFilters() {
+    const params = new URLSearchParams(window.location.search);
+    
+    // Xóa các param cũ để cập nhật mới
+    params.delete('brand');
+    params.delete('min_price');
+    params.delete('max_price');
+    
+    // Lấy thương hiệu được chọn (checkbox)
+    const selectedBrands = [];
+    document.querySelectorAll('input[name="brand"]:checked').forEach(cb => {
+        selectedBrands.push(cb.value);
+    });
+    if (selectedBrands.length > 0) {
+        params.set('brand', selectedBrands[0]);
+    }
+    
+    // Lấy khoảng giá
+    const minPrice = document.getElementById('min_price').value;
+    const maxPrice = document.getElementById('max_price').value;
+    if (minPrice) params.set('min_price', minPrice);
+    if (maxPrice) params.set('max_price', maxPrice);
+    
+    // Reset page về 1
+    params.set('page', '1');
+    
+    window.location.search = params.toString();
+}
+
+function applySort() {
+    const params = new URLSearchParams(window.location.search);
+    const sortValue = document.getElementById('sort_select').value;
+    if (sortValue) {
+        params.set('sort', sortValue);
+    } else {
+        params.delete('sort');
+    }
+    params.set('page', '1');
+    window.location.search = params.toString();
+}
+
+function setPriceRange(min, max) {
+    document.getElementById('min_price').value = min;
+    document.getElementById('max_price').value = max;
+    applyFilters();
+}
+
+function applyMobileFilters() {
+    const params = new URLSearchParams(window.location.search);
+    params.delete('brand');
+    params.delete('min_price');
+    params.delete('max_price');
+    
+    const selectedBrands = [];
+    document.querySelectorAll('#mobileFilter input[name="brand"]:checked').forEach(cb => {
+        selectedBrands.push(cb.value);
+    });
+    if (selectedBrands.length > 0) {
+        params.set('brand', selectedBrands[0]);
+    }
+    
+    const minPrice = document.getElementById('mobile_min_price').value;
+    const maxPrice = document.getElementById('mobile_max_price').value;
+    if (minPrice) params.set('min_price', minPrice);
+    if (maxPrice) params.set('max_price', maxPrice);
+    
+    params.set('page', '1');
+    window.location.search = params.toString();
+}
+</script>
+
+<style>
+/* Các style đã có sẵn trong file HTML bạn cung cấp */
+.category-container {
+    padding: 40px 0;
+    min-height: 100vh;
+}
+
+.filter-sidebar {
+    background: #fff;
+    border-radius: 15px;
+    padding: 20px;
+}
+
+.filter-group {
+    border-bottom: 1px solid var(--bs-secondary);
+    padding-bottom: 15px;
+    margin-bottom: 15px;
+}
+
+.filter-title {
+    font-weight: 700;
+    font-size: 1rem;
+    margin-bottom: 15px;
+    color: var(--bs-blue);
+}
+
+.product-card {
+    border: 1px solid var(--bs-secondary);
+    border-radius: 15px;
+    transition: all 0.3s ease;
+    overflow: hidden;
+}
+
+.product-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+    border-color: var(--bs-primary);
+}
+
+.product-img {
+    height: 200px;
+    object-fit: cover;
+    background-color: #f4f4f4;
+}
+
+.sort-bar {
+    background: #fff;
+    border-radius: 12px;
+    padding: 15px 20px;
+    margin-bottom: 25px;
+}
+
+.pagination .page-link {
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+</style>
+{% endblock %}

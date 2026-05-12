@@ -49,7 +49,7 @@ MIDDLEWARE = [
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
 
-ROOT_URLCONF = "Gt_django_wed.urls"
+ROOT_URLCONF = "vppgiaothon.urls"
 
 TEMPLATES = [
     {
@@ -62,15 +62,15 @@ TEMPLATES = [
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
                 # Cho hiển thị categories mọi nơi trong project
-                "Gt_django_wed.context_processors.global_categories",
+                "vppgiaothon.context_processors.global_categories",
                 # Lây ten domail
-                "Gt_django_wed.context_processors.site_info",
+                "vppgiaothon.context_processors.site_info",
             ],
         },
     },
 ]
 
-WSGI_APPLICATION = "Gt_django_wed.wsgi.application"
+WSGI_APPLICATION = "vppgiaothon.wsgi.application"
 
 
 # Database

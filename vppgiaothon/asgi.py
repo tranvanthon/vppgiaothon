@@ -1,5 +1,5 @@
 """
-ASGI config for Gt_django_wed project.
+ASGI config for vppgiaothon project.
 
 It exposes the ASGI callable as a module-level variable named ``application``.
 
@@ -11,6 +11,6 @@ import os
 
 from django.core.asgi import get_asgi_application
 
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'Gt_django_wed.settings')
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'vppgiaothon.settings')
 
 application = get_asgi_application()

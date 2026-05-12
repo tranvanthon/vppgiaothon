@@ -1,0 +1,256 @@
+<!-- templates/store/category_list.html -->
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}
+  {{ page_title }} | {{ block.super }}
+{% endblock %}
+
+{% block meta_description %}
+  {{ meta_description }}
+{% endblock %}
+
+{% block navbar %}
+  {% include 'parterials/navbar.html' %}
+{% endblock %}
+
+{% block content %}
+  <div class="container py-4">
+    <!-- Breadcrumb - Giúp SEO và điều hướng -->
+    <nav aria-label="breadcrumb">
+      <ol class="breadcrumb">
+        {% for breadcrumb in breadcrumbs %}
+          {% if breadcrumb.url %}
+            <li class="breadcrumb-item">
+              <a href="{{ breadcrumb.url }}">{{ breadcrumb.name }}</a>
+            </li>
+          {% else %}
+            <li class="breadcrumb-item active" aria-current="page">{{ breadcrumb.name }}</li>
+          {% endif %}
+        {% endfor %}
+      </ol>
+    </nav>
+
+    <!-- Header Section -->
+    <div class="text-center mb-5">
+      <h1 class="display-5 fw-bold">{{ page_title }}</h1>
+      <p class="lead text-muted">
+        Có <strong>{{ total_categories }}</strong> danh mục với
+        <strong>{{ total_products }}</strong> sản phẩm
+      </p>
+      {% if meta_description %}
+        <p class="text-muted small">{{ meta_description }}</p>
+      {% endif %}
+    </div>
+
+    <!-- Featured Categories Section (Danh mục nổi bật) -->
+    {% if featured_categories %}
+      <div class="mb-5">
+        <h2 class="text-center mb-4">✨ Danh mục nổi bật</h2>
+        <div class="row g-4">
+          {% for category in featured_categories %}
+            <div class="col-md-4 col-lg-2">
+              <div class="featured-category-card text-center">
+                <a href="{% url 'store:category_detail' category.slug %}" class="text-decoration-none">
+                  {% if category.icon_code %}
+                    <i class="{{ category.icon_code }} fa-3x mb-3 text-primary"></i>
+                  {% else %}
+                    <div class="bg-light rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 80px; height: 80px;">
+                      <i class="fas fa-folder fa-2x text-muted"></i>
+                    </div>
+                  {% endif %}
+                  <h6>{{ category.name }}</h6>
+                  <small class="text-muted">{{ category.direct_product_count }} sản phẩm</small>
+                </a>
+              </div>
+            </div>
+          {% endfor %}
+        </div>
+      </div>
+    {% endif %}
+
+    <!-- Bộ lọc / Sắp xếp (thêm mới) - Rất hữu ích khi có nhiều danh mục -->
+    {% if categories %}
+      <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+        <div class="btn-group" role="group">
+          <a href="?sort=name" class="btn btn-outline-primary btn-sm">Tên A-Z</a>
+          <a href="?sort=-name" class="btn btn-outline-primary btn-sm">Tên Z-A</a>
+          <a href="?sort=product_count" class="btn btn-outline-primary btn-sm">Nhiều sản phẩm nhất</a>
+        </div>
+        <div class="text-muted small">Hiển thị {{ page_obj.start_index }}-{{ page_obj.end_index }} trong tổng số {{ total_categories }} danh mục</div>
+      </div>
+    {% endif %}
+
+    <!-- All Categories Grid -->
+    {% if categories %}
+      <div class="row g-4">
+        {% for category in categories %}
+          <div class="col-md-6 col-lg-4">
+            <div class="card h-100 shadow-sm hover-scale">
+              <div class="card-body">
+                <div class="d-flex align-items-start mb-3">
+                  <!-- Icon -->
+                  {% if category.icon_code %}
+                    <i class="{{ category.icon_code }} fa-2x me-3 text-primary"></i>
+                  {% else %}
+                    <i class="fas fa-tags fa-2x me-3 text-muted"></i>
+                  {% endif %}
+
+                  <!-- Category Info -->
+                  <div class="flex-grow-1">
+                    <h3 class="h5 card-title mb-1"><a href="{% url 'store:category_detail' category.slug %}" class="text-decoration-none text-dark">{{ category.name }}</a></h3>
+
+                    <!-- Stats -->
+                    <div class="mb-2">
+                      <span class="badge bg-primary">{{ category.direct_product_count }} sản phẩm</span>
+                      {% if category.active_children_count > 0 %}
+                        <span class="badge bg-info">{{ category.active_children_count }} danh mục con</span>
+                      {% endif %}
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Mô tả ngắn (nếu có) -->
+                {% if category.short_description %}
+                  <p class="small text-muted">{{ category.short_description|truncatewords:20 }}</p>
+                {% endif %}
+
+                <!-- Subcategories (Children) -->
+                {% if category.active_children_count > 0 %}
+                  <div class="mt-3 pt-2 border-top">
+                    <strong class="small text-muted">📂 Danh mục con:</strong>
+                    <div class="subcategory-list mt-2">
+                      {% for child in category.children.all|slice:':5' %}
+                        {% if child.is_active %}
+                          <a href="{% url 'store:category_detail' child.slug %}" class="badge bg-light text-dark me-1 mb-1 p-2 text-decoration-none">{{ child.name }}</a>
+                        {% endif %}
+                      {% endfor %}
+                      {% if category.children.all|length > 5 %}
+                        <span class="badge bg-secondary">+{{ category.children.all|length|add:'-5' }}</span>
+                      {% endif %}
+                    </div>
+                  </div>
+                {% endif %}
+
+                <!-- Meta Description (SEO) -->
+                {% if category.meta_description %}
+                  <p class="small text-muted mt-2 mb-0">{{ category.meta_description|truncatewords:15 }}</p>
+                {% endif %}
+              </div>
+
+              <!-- Card Footer -->
+              <div class="card-footer bg-transparent text-end">
+                <a href="{% url 'store:category_detail' category.slug %}" class="btn btn-sm btn-outline-primary">Xem tất cả <i class="fas fa-arrow-right ms-1"></i></a>
+              </div>
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+
+      <!-- Phân trang -->
+      {% if is_paginated %}
+        <nav aria-label="Page navigation" class="mt-5">
+          <ul class="pagination justify-content-center">
+            {% if page_obj.has_previous %}
+              <li class="page-item">
+                <a class="page-link"
+                  href="?page=1{% if request.GET.sort %}
+                    &sort={{ request.GET.sort }}
+                  {% endif %}">
+                  &laquo; Đầu
+                </a>
+              </li>
+              <li class="page-item">
+                <a class="page-link"
+                  href="?page={{ page_obj.previous_page_number }}{% if request.GET.sort %}
+                    &sort={{ request.GET.sort }}
+                  {% endif %}">
+                  Trước
+                </a>
+              </li>
+            {% endif %}
+
+            <li class="page-item active">
+              <span class="page-link">Trang {{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span>
+            </li>
+
+            {% if page_obj.has_next %}
+              <li class="page-item">
+                <a class="page-link"
+                  href="?page={{ page_obj.next_page_number }}{% if request.GET.sort %}
+                    &sort={{ request.GET.sort }}
+                  {% endif %}">
+                  Sau
+                </a>
+              </li>
+              <li class="page-item">
+                <a class="page-link"
+                  href="?page={{ page_obj.paginator.num_pages }}{% if request.GET.sort %}
+                    &sort={{ request.GET.sort }}
+                  {% endif %}">
+                  Cuối &raquo;
+                </a>
+              </li>
+            {% endif %}
+          </ul>
+        </nav>
+      {% endif %}
+    {% else %}
+      <!-- Empty State -->
+      <div class="text-center py-5">
+        <i class="fas fa-folder-open fa-5x text-muted mb-3"></i>
+        <h3>Chưa có danh mục nào</h3>
+        <p class="text-muted">Hiện tại chưa có danh mục sản phẩm nào. Hãy quay lại sau nhé!</p>
+        <a href="{% url 'home' %}" class="btn btn-primary mt-3">Về trang chủ</a>
+      </div>
+    {% endif %}
+  </div>
+
+  <style>
+    .hover-scale {
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+    
+    .hover-scale:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+    }
+    
+    .featured-category-card {
+      transition: all 0.3s ease;
+      padding: 15px;
+      border-radius: 10px;
+    }
+    
+    .featured-category-card:hover {
+      background-color: #f8f9fa;
+      transform: translateY(-3px);
+    }
+    
+    .subcategory-list .badge {
+      transition: all 0.2s ease;
+      font-weight: normal;
+    }
+    
+    .subcategory-list .badge:hover {
+      background-color: #0d6efd !important;
+      color: white !important;
+    }
+    
+    /* Thêm style cho bộ lọc */
+    .btn-outline-primary.btn-sm:hover {
+      background-color: #0d6efd;
+      color: white;
+    }
+    
+    /* Responsive nhỏ hơn */
+    @media (max-width: 768px) {
+      .display-5 {
+        font-size: 1.8rem;
+      }
+      .featured-category-card {
+        padding: 10px;
+      }
+    }
+  </style>
+{% endblock %}

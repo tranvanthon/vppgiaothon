@@ -1,0 +1,139 @@
+{% load format_filter %}
+
+<div class="
+{% if title == 'home' %}
+  col-6 col-md-4 col-lg-3
+{% else %}
+  col-6 col-md-4 
+{% endif %}
+">
+  <div class="product-card bg-white h-100 shadow-sm border-0">
+    <div class="position-relative">
+      {% with main_image=product.images.all|first %}
+        {% if main_image %}
+          <img src="{{ main_image.imageURL }}" class="product-img w-100" alt="{{ product.name }}" />
+        {% else %}
+          <img src="/static/images/default-product.png" class="product-img w-100" alt="{{ product.name }}" />
+        {% endif %}
+      {% endwith %}
+      
+      {# Badge giảm giá nếu có #}
+      {% if product.discount_percent > 0 %}
+        <span class="badge bg-danger position-absolute top-0 start-0 m-2 rounded-pill">
+          -{{ product.discount_percent}}%
+        </span>
+      {% endif %}
+      
+      {# Badge bestseller nếu có #}
+      {% if product.is_bestseller %}
+        <span class="badge bg-warning text-dark position-absolute bottom-0 start-0 m-2 rounded-pill">
+          🔥 Bestseller
+        </span>
+      {% endif %}
+      
+      {# Badge featured nếu có #}
+      {% comment %} {% if product.is_featured and not product.is_bestseller %}
+        <span class="badge bg-info position-absolute bottom-0 start-0 m-2 rounded-pill">
+          Nổi bật
+        </span>
+      {% endif %} {% endcomment %}
+      
+      <button class="btn btn-sm btn-light position-absolute top-0 end-0 m-2 rounded-circle shadow-sm">
+        <i class="bi bi-heart"></i>
+      </button>
+    </div>
+    
+    <div class="p-3">
+      {# Thương hiệu #}
+      {% if product.brand %}
+        <small class="text-muted text-uppercase mb-1 d-block">{{ product.brand.name }}</small>
+      {% endif %}
+      
+      {# Tên sản phẩm #}
+      <h6 class="fw-bold mb-1 text-truncate" title="{{ product.name }}">{{ product.name }}</h6>
+      
+      {# Mã SKU (tùy chọn - có thể bỏ nếu muốn gọn) #}
+      {% if product.sku %}
+        <small class="text-muted d-block mb-1" style="font-size: 10px;">Mã: {{ product.sku }}</small>
+      {% endif %}
+      <style> 
+  .color-dot { 
+    display: inline-block; 
+    width: 20px; 
+    height: 20px; 
+    border-radius: 50%; 
+    margin-right: 5px; 
+    border: 1px solid #ddd; 
+    cursor: pointer; 
+    transition: transform 0.2s;
+  }
+  .color-dot:hover {
+    transform: scale(1.1);
+    border-color: #999;
+  }
+</style>
+      {# Màu sắc #}
+      {% if product.color %}
+          
+      
+        <div class="color-options mt-1 mb-1 d-flex align-items-center">
+          <small class="text-muted d-block mb-1 me-3" style="font-size: 11px;">Màu: 
+          </small>
+          {% with color_value=product.color %}
+            <span class="color-dot" 
+                  style="background-color: 
+                    {% if color_value == 'BLACK' %}#1a1a1a
+                    {% elif color_value == 'GOLD' %}#DAA520
+                    {% elif color_value == 'RED' %}#DC3545
+                    {% else %}#cccccc
+                    {% endif %}" 
+                  title="{{ product.get_color_display }}">
+            </span>
+          {% endwith %}
+        </div>
+
+        
+      {% endif %}
+      
+      {% comment %} {# Mô tả ngắn (nếu có) #}
+      {% if product.short_description %}
+        <p class="small text-muted mb-2 text-truncate">{{ product.short_description|truncatechars:40 }}</p>
+      {% endif %} {% endcomment %}
+      
+      {# Đánh giá giả định (có thể thay bằng dữ liệu thật nếu có model Review) #}
+      <div class="text-warning small mb-2">
+        <i class="bi bi-star-fill"></i> 4.9
+        <span class="text-muted">(120 đánh giá)</span>
+      </div>
+      
+      {# Giá và trạng thái tồn kho #}
+      <div class="d-flex justify-content-between align-items-center">
+        <div>
+          {% if product.discount_percent > 0 %}
+            <span class="fw-bold text-primary">{{ product.price_sale|dot_thousands }}đ</span>
+            <span class="text-muted small text-decoration-line-through ms-1">{{ product.price|dot_thousands }}đ</span>
+          {% else %}
+            <span class="fw-bold text-primary">{{ product.price|dot_thousands }}đ</span>
+          {% endif %}
+          
+          {# Hiển thị trạng thái tồn kho #}
+          {% if not product.is_in_stock %}
+            <span class="badge bg-secondary d-block mt-1 small">Hết hàng</span>
+          {% elif product.is_low_stock %}
+            <span class="badge bg-warning text-dark d-block mt-1 small">Còn {{ product.stock }}</span>
+          {% endif %}
+        </div>
+        
+        <button class="btn btn-sm {% if not product.is_in_stock %}btn-secondary{% else %}btn-primary{% endif %} rounded-pill px-3" 
+                {% if not product.is_in_stock %}disabled{% endif %}>
+          {% if product.is_in_stock %}Mua{% else %}Hết hàng{% endif %}
+        </button>
+        
+        {% if user.is_authenticated %}
+        <a href="{% url 'store:product_update' product.slug %}" class="btn btn-sm btn-warning">Chỉnh sửa sản phẩm</a>
+        {% endif %}
+          
+      </div>
+    </div>
+  </div>
+</div>
