@@ -1,0 +1,805 @@
+{% extends 'base.html' %}
+{% block content %}
+  <div class="sidebar shadow-sm">
+    <div class="p-4 mb-3">
+      <h4 class="fw-bold text-primary"><a href="{% url 'store:home' %}" class="nav-link"><i class="bi bi-shop-window me-2"></i>E-STORE</a></h4>
+    </div>
+    <div class="nav flex-column">
+      <div class="nav-link" onclick="showPage('dashboard', this)">
+        <i class="bi bi-speedometer2"></i> Dashboard
+      </div>
+      <div class="nav-link" onclick="showPage('products', this)">
+        <i class="bi bi-box-seam"></i> Sản phẩm
+      </div>
+      <div class="nav-link" onclick="showPage('add-category', this)">
+        <i class="bi bi-tags"></i> Danh mục
+      </div>
+      <div class="nav-link" onclick="showPage('customers', this)">
+        <i class="bi bi-people"></i> Khách hàng
+      </div>
+      <div class="nav-link" onclick="showPage('orders', this)">
+        <i class="bi bi-cart3"></i> Đơn hàng
+      </div>
+      <div class="nav-link" onclick="showPage('coupons', this)">
+        <i class="bi bi-ticket-perforated"></i> Mã giảm giá
+      </div>
+      <hr class="mx-3" />
+      <div class="nav-link text-danger fw-bold" onclick="showPage('admin-panel', this)">
+        <i class="bi bi-shield-lock"></i> Admin Panel
+      </div>
+      <div class="nav-link" onclick="showPage('settings', this)">
+        <i class="bi bi-gear"></i> Cài đặt
+      </div>
+      <div class="nav-link" onclick="showPage('category-detail', this)">
+        <i class="bi bi-info-circle"></i> Chi tiết danh mục
+      </div>
+      <div class="nav-link" onclick="showPage('product-detail', this)">
+        <i class="bi bi-file-earmark-medical"></i> Chi tiết sản phẩm
+      </div>
+      <div class="nav-link" onclick="showPage('reports', this)">
+        <i class="bi bi-pie-chart"></i> Báo cáo
+      </div>
+    </div>
+  </div>
+
+  <div class="main-content">
+    <!-- Dashboard -->
+    <section id="dashboard" class="page-content active">
+      <h3 class="fw-bold mb-4">Tổng quan</h3>
+      <div class="row g-4 mb-4">
+        <div class="col-md-4">
+          <div class="card p-4 bg-primary text-white">
+            <h6>Doanh thu ngày</h6>
+            <h2 class="fw-bold">12.500.000đ</h2>
+            <small><i class="bi bi-arrow-up"></i> +15% so với hôm qua</small>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="card p-4 bg-white">
+            <h6>Đơn hàng mới</h6>
+            <h2 class="fw-bold text-dark">48</h2>
+            <small class="text-success"><i class="bi bi-check-circle"></i> 5 đơn đang chờ</small>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="card p-4 bg-white">
+            <h6>Lượt truy cập</h6>
+            <h2 class="fw-bold text-dark">1,204</h2>
+            <small class="text-muted">Tính trong 24h qua</small>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Products -->
+    <section id="products" class="page-content">
+      <div class="d-flex justify-content-between align-items-center mb-4">
+        <h3 class="fw-bold">Quản lý sản phẩm</h3>
+        <a href="{% url 'store:product_create' %}" class="btn btn-primary rounded-pill px-4"><i class="bi bi-plus-lg"></i> Thêm sản phẩm</a>
+      </div>
+      <div class="row g-4">
+        {% for product in products %}
+          <div class="col-md-3">
+            <div class="card p-3 h-100">
+              <img src="{{ product.images.all.0.image.url }}" class="product-img mb-3" alt="{{ product.name }}" style="object-fit: cover; height: 180px;" />
+              <h6 class="fw-bold text-truncate">{{ product.name }}</h6>
+              <p class="text-muted small">
+                {{ product.category.name }} •{% if product.track_stock %}
+                  {{ product.stock }}
+                {% else %}
+                  ∞
+                {% endif %}trong kho
+              </p>
+
+              <div class="d-flex justify-content-between align-items-center mt-auto">
+                <span class="fw-bold text-primary">{{ product.price|floatformat:0 }}đ</span>
+                <div class="btn-group">
+                  <button type="button" class="btn btn-sm btn-outline-secondary border-0 edit-product-btn" data-bs-toggle="modal" data-bs-target="#updateProductModal" data-id="{{ product.pk }}" data-name="{{ product.name }}" data-sku="{{ product.sku }}" data-category="{{ product.category.id }}" data-brand="{{ product.brand.id }}" data-color="{{ product.color }}" data-short="{{ product.short_description }}" data-desc="{{ product.description }}" data-price="{{ product.price }}" data-cost="{{ product.cost_price }}" data-stock="{{ product.stock }}" data-active="{{ product.is_active|yesno:'true,false' }}" data-featured="{{ product.is_featured|yesno:'true,false' }}"><i class="bi bi-pencil"></i></button>
+                  <form action="{% url 'store:product_delete' product.slug %}" method="POST" class="d-inline" onsubmit="return confirm('Bạn có chắc chắn muốn xóa?');">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-sm btn-outline-danger border-0"><i class="bi bi-trash"></i></button>
+                  </form>
+                </div>
+              </div>
+            </div>
+          </div>
+        {% empty %}
+          <div class="col-12 text-center py-4">
+            <p class="text-muted">Chưa có sản phẩm nào được tạo.</p>
+          </div>
+        {% endfor %}
+      </div>
+    </section>
+
+    <!-- Customers -->
+    <section id="customers" class="page-content">
+      <h3 class="fw-bold mb-4">Danh sách khách hàng</h3>
+      <div class="card">
+        <div class="table-responsive p-3">
+          <table class="table table-hover align-middle">
+            <thead>
+              <tr class="text-muted small">
+                <th>KHÁCH HÀNG</th>
+                <th>EMAIL</th>
+                <th>TỔNG CHI TIÊU</th>
+                <th>TRẠNG THÁI</th>
+                <th>HÀNH ĐỘNG</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>
+                  <div class="d-flex align-items-center gap-2">
+                    <img src="https://i.pravatar.cc/150?u=1" class="avatar" />
+                    <span class="fw-semibold">Lê Anh Tuấn</span>
+                  </div>
+                </td>
+                <td>tuan.le@email.com</td>
+                <td class="fw-bold">45.000.000đ</td>
+                <td>
+                  <span class="badge bg-success-subtle text-success">Thành viên Kim cương</span>
+                </td>
+                <td>
+                  <button class="btn btn-light btn-sm"><i class="bi bi-eye"></i></button>
+                </td>
+              </tr>
+              <tr>
+                <td>
+                  <div class="d-flex align-items-center gap-2">
+                    <img src="https://i.pravatar.cc/150?u=2" class="avatar" />
+                    <span class="fw-semibold">Nguyễn Mai Anh</span>
+                  </div>
+                </td>
+                <td>maianh@email.com</td>
+                <td class="fw-bold">12.200.000đ</td>
+                <td>
+                  <span class="badge bg-primary-subtle text-primary">Thành viên mới</span>
+                </td>
+                <td>
+                  <button class="btn btn-light btn-sm"><i class="bi bi-eye"></i></button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- Orders -->
+    <section id="orders" class="page-content">
+      <h3 class="fw-bold mb-4">Quản lý đơn hàng</h3>
+      <div class="card shadow-sm border-0">
+        <div class="p-3 bg-white border-bottom d-flex gap-2">
+          <button class="btn btn-sm btn-primary">Tất cả</button>
+          <button class="btn btn-sm btn-outline-secondary">Chờ xử lý</button>
+          <button class="btn btn-sm btn-outline-secondary">Đang giao</button>
+          <button class="btn btn-sm btn-outline-secondary">Đã hoàn thành</button>
+        </div>
+        <div class="table-responsive p-3">
+          <table class="table align-middle">
+            <thead>
+              <tr class="text-muted small">
+                <th>MÃ ĐƠN</th>
+                <th>KHÁCH HÀNG</th>
+                <th>TRẠNG THÁI</th>
+                <th>PHƯƠNG THỨC</th>
+                <th>TỔNG TIỀN</th>
+                <th>THAO TÁC</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>
+                  <span class="fw-bold">#ORD-9921</span>
+                </td>
+                <td>Nguyễn Minh Tâm</td>
+                <td>
+                  <span class="badge bg-warning-subtle text-warning">Đang xử lý</span>
+                </td>
+                <td>Chuyển khoản</td>
+                <td class="fw-bold">1.250.000đ</td>
+                <td>
+                  <button class="btn btn-light btn-sm"><i class="bi bi-printer"></i> In đơn</button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- Coupons -->
+    <section id="coupons" class="page-content">
+      <div class="d-flex justify-content-between align-items-center mb-4">
+        <h3 class="fw-bold">Mã giảm giá (Marketing)</h3>
+        <button class="btn btn-primary"><i class="bi bi-plus-lg"></i> Tạo mã mới</button>
+      </div>
+      <div class="row g-4">
+        <div class="col-md-4">
+          <div class="card p-3 border-dashed border-2 text-center" style="
+            border-style: dashed !important;
+            border-color: #4361ee !important;
+          ">
+            <div class="display-6 fw-bold text-primary">SUMMER20</div>
+            <p class="mb-0 mt-2 fw-bold">Giảm 20% cho đồ hè</p>
+            <small class="text-muted">Hết hạn: 30/06/2026</small>
+            <div class="mt-3">
+              <span class="badge bg-success">Đang chạy</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Add Category -->
+    <section id="add-category" class="page-content">
+      <h3 class="fw-bold mb-4">Quản lý danh mục</h3>
+      <div class="row g-4">
+        <div class="col-md-12">
+          <div class="card h-100">
+            <div class="card-header bg-white p-3 border-0">
+              <h6 class="fw-bold mb-0">Danh mục hiện có</h6>
+            </div>
+            <div class="table-responsive p-3">
+              <table class="table table-borderless align-middle">
+                <thead class="bg-light">
+                  <tr class="small text-muted">
+                    <th>ICON / ẢNH</th>
+                    <th>TÊN DANH MỤC</th>
+                    <th>SẢN PHẨM</th>
+                    <th>TRẠNG THÁI</th>
+                    <th>THAO TÁC</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for category in categories %}
+                    <tr>
+                      <td>
+                        {% if category.image %}
+                          <img src="{{ category.image.url }}" class="rounded" style="width: 35px; height: 35px; object-fit: cover;" />
+                        {% else %}
+                          <div class="icon-box bg-primary-subtle text-primary d-flex align-items-center justify-content-center fw-bold rounded" style="width: 35px; height: 35px">
+                            <i class="{{ category.icon_code|default:'📁' }}"></i>
+                          </div>
+                        {% endif %}
+                      </td>
+                      <td class="fw-semibold">
+                        {% if category.parent %}
+                          <span class="text-muted small">{{ category.parent.name }} &gt;</span>
+                        {% endif %}{{ category.name }}
+                      </td>
+                      <td>
+                        <span class="badge bg-secondary">{{ category.total_product }}</span>
+                      </td>
+                      <td>
+                        {% if category.is_active %}
+                          <span class="text-success small"><i class="bi bi-circle-fill fs-6"></i> Active</span>
+                        {% else %}
+                          <span class="text-danger small"><i class="bi bi-circle-fill fs-6"></i> Bị ẩn</span>
+                        {% endif %}
+                      </td>
+                      <td>
+                        <a href="{% url 'store:category_create' %}" class="btn btn-sm btn-outline-primary border-0"><i class="bi bi-folder-plus text-info"></i></a>
+                        <a href="{% url 'store:category_update' category.slug %}" class="btn btn-sm btn-outline-info border-0"><i class="bi bi-pencil text-primary"></i></a>
+                        <form action="{% url 'store:category_delete' category.slug %}" method="POST" class="d-inline" onsubmit="return confirm('Bạn có chắc chắn muốn xóa danh mục {{ category.name }}?');">
+                          {% csrf_token %}
+                          <button type="submit" class="btn btn-sm btn-outline-danger border-0"><i class="bi bi-trash"></i></button>
+                        </form>
+                      </td>
+                    </tr>
+                  {% empty %}
+                    <tr>
+                      <td colspan="4" class="text-center text-muted py-3">Chưa có danh mục nào.</td>
+                    </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+    <!-- Admin Panel -->
+    <section id="admin-panel" class="page-content">
+      <div class="d-flex justify-content-between align-items-center mb-4">
+        <h3 class="fw-bold">Bảng quản trị hệ thống</h3>
+        <span class="badge bg-dark px-3 py-2"><i class="bi bi-cpu me-2"></i>Server Status: Online</span>
+      </div>
+      <div class="row g-4 mb-4">
+        <div class="col-md-3">
+          <div class="card p-3 border-0 shadow-sm border-start border-primary border-4">
+            <p class="text-muted small mb-1">Tổng người dùng</p>
+            <h3 class="fw-bold">15,402</h3>
+            <div class="progress" style="height: 4px">
+              <div class="progress-bar" style="width: 70%"></div>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="card p-3 border-0 shadow-sm border-start border-warning border-4">
+            <p class="text-muted small mb-1">Tài khoản mới (24h)</p>
+            <h3 class="fw-bold">124</h3>
+            <small class="text-warning"><i class="bi bi-clock-history"></i> Đang chờ xác minh</small>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="card p-3 border-0 shadow-sm border-start border-danger border-4">
+            <p class="text-muted small mb-1">Báo cáo vi phạm</p>
+            <h3 class="fw-bold">12</h3>
+            <small class="text-danger"><i class="bi bi-exclamation-triangle"></i> Cần xử lý ngay</small>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="card p-3 border-0 shadow-sm border-start border-info border-4">
+            <p class="text-muted small mb-1">Băng thông sử dụng</p>
+            <h3 class="fw-bold">82%</h3>
+            <div class="progress" style="height: 4px">
+              <div class="progress-bar bg-info" style="width: 82%"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="row g-4">
+        <div class="col-lg-8">
+          <div class="card shadow-sm border-0">
+            <div class="card-header bg-white p-3 d-flex justify-content-between align-items-center">
+              <h6 class="fw-bold mb-0">Quản lý nhân sự vận hành</h6>
+              <button class="btn btn-sm btn-primary">Thêm nhân viên</button>
+            </div>
+            <div class="table-responsive p-3">
+              <table class="table table-hover align-middle">
+                <thead class="table-light">
+                  <tr class="small text-muted">
+                    <th>NHÂN VIÊN</th>
+                    <th>VAI TRÒ</th>
+                    <th>TRUY CẬP CUỐI</th>
+                    <th>THAO TÁC</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>
+                      <div class="d-flex align-items-center gap-3">
+                        <img src="https://i.pravatar.cc/150?u=12" class="rounded-circle" width="35" />
+                        <div>
+                          <p class="mb-0 fw-bold">Hoàng Nam</p>
+                          <small class="text-muted">nam.h@company.com</small>
+                        </div>
+                      </div>
+                    </td>
+                    <td>
+                      <span class="badge rounded-pill bg-danger-subtle text-danger">Super Admin</span>
+                    </td>
+                    <td class="small text-muted">2 phút trước</td>
+                    <td>
+                      <i class="bi bi-three-dots-vertical cursor-pointer"></i>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td>
+                      <div class="d-flex align-items-center gap-3">
+                        <img src="https://i.pravatar.cc/150?u=15" class="rounded-circle" width="35" />
+                        <div>
+                          <p class="mb-0 fw-bold">Minh Thu</p>
+                          <small class="text-muted">thu.m@company.com</small>
+                        </div>
+                      </div>
+                    </td>
+                    <td>
+                      <span class="badge rounded-pill bg-info-subtle text-info">Editor</span>
+                    </td>
+                    <td class="small text-muted">1 giờ trước</td>
+                    <td>
+                      <i class="bi bi-three-dots-vertical cursor-pointer"></i>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+        <div class="col-lg-4">
+          <div class="card shadow-sm border-0 h-100">
+            <div class="card-header bg-white p-3">
+              <h6 class="fw-bold mb-0">Nhật ký hệ thống</h6>
+            </div>
+            <div class="card-body p-3">
+              <div class="d-flex gap-3 mb-4">
+                <div class="text-primary fs-4">
+                  <i class="bi bi-plus-circle"></i>
+                </div>
+                <div>
+                  <p class="mb-0 small fw-bold">Sản phẩm mới được thêm</p>
+                  <small class="text-muted">Bởi Hoàng Nam • 10:25 AM</small>
+                </div>
+              </div>
+              <div class="d-flex gap-3 mb-4">
+                <div class="text-danger fs-4">
+                  <i class="bi bi-shield-slash"></i>
+                </div>
+                <div>
+                  <p class="mb-0 small fw-bold">Đăng nhập thất bại (IP: 192.168...)</p>
+                  <small class="text-muted">Cảnh báo bảo mật • 09:12 AM</small>
+                </div>
+              </div>
+              <div class="d-flex gap-3 mb-4">
+                <div class="text-success fs-4">
+                  <i class="bi bi-gear"></i>
+                </div>
+                <div>
+                  <p class="mb-0 small fw-bold">Cập nhật cấu hình hệ thống</p>
+                  <small class="text-muted">Tự động • 08:00 AM</small>
+                </div>
+              </div>
+              <button class="btn btn-light w-100 btn-sm text-primary fw-bold">Xem tất cả nhật ký</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Settings -->
+    <section id="settings" class="page-content">
+      <h3 class="fw-bold mb-4">Cấu hình hệ thống</h3>
+      <div class="row g-4">
+        <div class="col-md-8">
+          <div class="card p-4">
+            <h6 class="fw-bold mb-3 border-bottom pb-2">Thông tin cửa hàng</h6>
+            <div class="row g-3">
+              <div class="col-md-6">
+                <label class="form-label">Tên Store</label>
+                <input type="text" class="form-control" value="E-STORE Pro" />
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">Email hỗ trợ</label>
+                <input type="email" class="form-control" value="support@estore.com" />
+              </div>
+              <div class="col-md-12">
+                <label class="form-label">Địa chỉ kho hàng</label>
+                <input type="text" class="form-control" value="123 Đường ABC, Quận 1, TP.HCM" />
+              </div>
+            </div>
+            <h6 class="fw-bold mt-4 mb-3 border-bottom pb-2">Cấu hình vận chuyển</h6>
+            <div class="row g-3">
+              <div class="col-md-6">
+                <label class="form-label">Phí ship đồng giá (VNĐ)</label>
+                <input type="number" class="form-control" value="30000" />
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">Miễn phí ship từ đơn hàng (VNĐ)</label>
+                <input type="number" class="form-control" value="500000" />
+              </div>
+            </div>
+            <button class="btn btn-primary mt-4 px-5">Lưu thay đổi</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Category Detail -->
+    <section id="category-detail" class="page-content">
+      <div class="d-flex align-items-center gap-3 mb-4">
+        <button class="btn btn-light rounded-circle" onclick="showPage('category-list', this)"><i class="bi bi-arrow-left"></i></button>
+        <div>
+          <h3 class="fw-bold mb-0">Chi tiết: Điện thoại thông minh</h3>
+          <nav aria-label="breadcrumb">
+            <ol class="breadcrumb mb-0">
+              <li class="breadcrumb-item">
+                <a href="#" class="text-decoration-none text-primary">Danh mục</a>
+              </li>
+              <li class="breadcrumb-item active">Điện thoại thông minh</li>
+            </ol>
+          </nav>
+        </div>
+      </div>
+      <div class="row g-4">
+        <div class="col-lg-4">
+          <div class="card shadow-sm border-0 mb-4">
+            <div class="card-body p-4">
+              <div class="text-center mb-4">
+                <div class="icon-box bg-primary-subtle text-primary rounded-4 mx-auto mb-3 d-flex align-items-center justify-content-center" style="width: 80px; height: 80px; --bs-bg-opacity: 0.1">
+                  <i class="bi bi-phone fs-1"></i>
+                </div>
+                <h5 class="fw-bold">Điện thoại thông minh</h5>
+                <span class="badge bg-success-subtle text-success">Đang hoạt động</span>
+              </div>
+              <div class="border-top pt-3">
+                <div class="d-flex justify-content-between mb-2">
+                  <span class="text-muted small">Mã định danh:</span>
+                  <span class="fw-bold small">#CAT-001</span>
+                </div>
+                <div class="d-flex justify-content-between mb-2">
+                  <span class="text-muted small">Ngày tạo:</span>
+                  <span class="fw-bold small">12/04/2026</span>
+                </div>
+                <div class="d-flex justify-content-between">
+                  <span class="text-muted small">Người tạo:</span>
+                  <span class="fw-bold small">Admin Nam</span>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="card shadow-sm border-0">
+            <div class="card-body p-4">
+              <h6 class="fw-bold mb-3"><i class="bi bi-search me-2 text-primary"></i>Cấu hình SEO</h6>
+              <div class="mb-3">
+                <label class="form-label small text-muted">Thẻ tiêu đề (Meta Title)</label>
+                <input type="text" class="form-control" value="Mua điện thoại thông minh chính hãng giá rẻ" />
+              </div>
+              <div class="mb-3">
+                <label class="form-label small text-muted">Đường dẫn (Slug)</label>
+                <input type="text" class="form-control" value="dien-thoai-thong-minh" disabled />
+              </div>
+              <div class="mb-0">
+                <label class="form-label small text-muted">Mô tả (Meta Description)</label>
+                <textarea class="form-control" rows="3">Tổng hợp các mẫu điện thoại mới nhất từ Apple, Samsung, Xiaomi...</textarea>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="col-lg-8">
+          <div class="row g-3 mb-4">
+            <div class="col-md-4">
+              <div class="card p-3 border-0 shadow-sm bg-primary text-white">
+                <small class="opacity-75">Tổng sản phẩm</small>
+                <h3 class="fw-bold mb-0">1,250</h3>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="card p-3 border-0 shadow-sm">
+                <small class="text-muted">Lượt xem (Tháng này)</small>
+                <h3 class="fw-bold mb-0 text-primary">45.2K</h3>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="card p-3 border-0 shadow-sm">
+                <small class="text-muted">Doanh thu đóng góp</small>
+                <h3 class="fw-bold mb-0 text-success">850M</h3>
+              </div>
+            </div>
+          </div>
+          <div class="card shadow-sm border-0">
+            <div class="card-header bg-white border-0 p-4 d-flex justify-content-between align-items-center">
+              <h6 class="fw-bold mb-0">Sản phẩm thuộc danh mục này</h6>
+              <div class="btn-group">
+                <button class="btn btn-sm btn-outline-secondary"><i class="bi bi-filter"></i></button>
+                <button class="btn btn-sm btn-outline-secondary"><i class="bi bi-download"></i></button>
+              </div>
+            </div>
+            <div class="table-responsive px-4 pb-4">
+              <table class="table align-middle">
+                <thead>
+                  <tr class="text-muted small">
+                    <th>SẢN PHẨM</th>
+                    <th>GIÁ BÁN</th>
+                    <th>TỒN KHO</th>
+                    <th>TRẠNG THÁI</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>
+                      <div class="d-flex align-items-center gap-2">
+                        <div class="rounded bg-light" style="width: 40px; height: 40px"></div>
+                        <span class="fw-semibold">iPhone 15 Pro</span>
+                      </div>
+                    </td>
+                    <td>28.500.000đ</td>
+                    <td>45</td>
+                    <td>
+                      <span class="badge rounded-pill bg-success">Còn hàng</span>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td>
+                      <div class="d-flex align-items-center gap-2">
+                        <div class="rounded bg-light" style="width: 40px; height: 40px"></div>
+                        <span class="fw-semibold">Samsung S24 Ultra</span>
+                      </div>
+                    </td>
+                    <td>30.200.000đ</td>
+                    <td>12</td>
+                    <td>
+                      <span class="badge rounded-pill bg-warning">Sắp hết</span>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+              <a href="#" class="text-primary small text-decoration-none fw-bold">Xem tất cả sản phẩm →</a>
+            </div>
+          </div>
+          <div class="mt-4 d-flex gap-2">
+            <button class="btn btn-primary px-4">Lưu thay đổi</button>
+            <button class="btn btn-outline-danger px-4">Xóa danh mục</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Product Detail -->
+    <section id="product-detail" class="page-content">
+      <div class="d-flex justify-content-between align-items-start mb-4">
+        <div>
+          <div class="d-flex align-items-center gap-2 mb-1">
+            <button class="btn btn-sm btn-light rounded-circle" onclick="showPage('products', this)"><i class="bi bi-arrow-left"></i></button>
+            <h3 class="fw-bold mb-0">SmartWatch Series 9 Pro</h3>
+          </div>
+          <nav aria-label="breadcrumb">
+            <ol class="breadcrumb mb-0 small">
+              <li class="breadcrumb-item">
+                <a href="#" class="text-decoration-none text-primary">Sản phẩm</a>
+              </li>
+              <li class="breadcrumb-item">
+                <a href="#" class="text-decoration-none text-primary">Điện tử</a>
+              </li>
+              <li class="breadcrumb-item active">SmartWatch</li>
+            </ol>
+          </nav>
+        </div>
+        <div class="d-flex gap-2">
+          <button class="btn btn-outline-danger px-3"><i class="bi bi-trash me-2"></i>Xóa</button>
+          <button class="btn btn-primary px-4"><i class="bi bi-save me-2"></i>Lưu thay đổi</button>
+        </div>
+      </div>
+      <div class="row g-4">
+        <div class="col-lg-8">
+          <div class="card shadow-sm border-0 p-4 mb-4">
+            <h6 class="fw-bold mb-3">Hình ảnh sản phẩm</h6>
+            <div class="row g-2">
+              <div class="col-md-8">
+                <img src="https://images.unsplash.com/photo-1523275335684-37898b6baf30?auto=format&fit=crop&w=800" class="img-fluid rounded-3 border" alt="Main image" />
+              </div>
+              <div class="col-md-4">
+                <div class="d-flex flex-column gap-2">
+                  <div class="border rounded-3 p-2 bg-light text-center">
+                    <i class="bi bi-plus-lg fs-2 text-muted"></i>
+                  </div>
+                  <div class="border rounded-3 p-2 bg-light text-center">
+                    <i class="bi bi-plus-lg fs-2 text-muted"></i>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="card shadow-sm border-0 p-4">
+            <h6 class="fw-bold mb-3">Mô tả chi tiết</h6>
+            <div class="mb-3">
+              <label class="form-label small text-muted">Tóm tắt ngắn</label>
+              <input type="text" class="form-control" value="Đồng hồ thông minh thế hệ mới với màn hình OLED cực sáng." />
+            </div>
+            <div>
+              <label class="form-label small text-muted">Nội dung sản phẩm</label>
+              <div class="border rounded-3 p-3 bg-light" style="min-height: 200px">
+                <p>Sản phẩm bao gồm các tính năng chính:</p>
+                <ul>
+                  <li>Đo nhịp tim, nồng độ oxy trong máu.</li>
+                  <li>Kháng nước chuẩn IP68.</li>
+                  <li>Thời lượng pin lên đến 48 giờ.</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="col-lg-4">
+          <div class="card shadow-sm border-0 p-4 mb-4">
+            <h6 class="fw-bold mb-3 text-primary">Giá & Trạng thái</h6>
+            <div class="mb-3">
+              <label class="form-label small text-muted">Giá bán hiện tại</label>
+              <div class="input-group">
+                <input type="text" class="form-control fw-bold text-primary fs-5" value="2.450.000" />
+                <span class="input-group-text bg-white">đ</span>
+              </div>
+            </div>
+            <div class="mb-3">
+              <label class="form-label small text-muted">Giá gốc (để tính giảm giá)</label>
+              <input type="text" class="form-control text-muted" value="3.000.000" />
+            </div>
+            <hr />
+            <div class="form-check form-switch mb-2">
+              <input class="form-check-input" type="checkbox" checked />
+              <label class="form-check-label">Hiển thị trên website</label>
+            </div>
+            <div class="form-check form-switch">
+              <input class="form-check-input" type="checkbox" />
+              <label class="form-check-label">Sản phẩm nổi bật (Hot)</label>
+            </div>
+          </div>
+          <div class="card shadow-sm border-0 p-4 mb-4">
+            <h6 class="fw-bold mb-3">Kho hàng & Biến thể</h6>
+            <div class="row g-2 mb-3">
+              <div class="col-6">
+                <label class="form-label small text-muted">Số lượng tồn</label>
+                <input type="number" class="form-control" value="120" />
+              </div>
+              <div class="col-6">
+                <label class="form-label small text-muted">Mã SKU</label>
+                <input type="text" class="form-control" value="SW-9PRO-BLUE" />
+              </div>
+            </div>
+            <div class="mb-2">
+              <label class="form-label small text-muted">Màu sắc hiện có</label>
+              <div class="d-flex gap-2">
+                <div class="rounded-circle border" style="width: 25px; height: 25px; background: #000"></div>
+                <div class="rounded-circle border" style="width: 25px; height: 25px; background: #278aae"></div>
+                <div class="rounded-circle border text-center" style="width: 25px; height: 25px">
+                  <i class="bi bi-plus"></i>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="card shadow-sm border-0 p-4">
+            <h6 class="fw-bold mb-3">Phân loại</h6>
+            <div class="mb-3">
+              <label class="form-label small text-muted">Thương hiệu</label>
+              <select class="form-select">
+                <option>Apple</option>
+                <option selected>Samsung</option>
+                <option>Xiaomi</option>
+              </select>
+            </div>
+            <div>
+              <label class="form-label small text-muted">Tags</label>
+              <div class="d-flex flex-wrap gap-1">
+                <span class="badge bg-secondary-subtle text-dark">Tech</span>
+                <span class="badge bg-secondary-subtle text-dark">Watch</span>
+                <span class="badge bg-secondary-subtle text-dark">New 2024</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Reports -->
+    <section id="reports" class="page-content">
+      <h3 class="fw-bold mb-4">Phân tích kinh doanh</h3>
+      <div class="row g-4">
+        <div class="col-md-8">
+          <div class="card p-4 h-100">
+            <h6 class="fw-bold mb-4">Tăng trưởng doanh thu</h6>
+            <div class="d-flex align-items-end gap-3 justify-content-between" style="height: 200px">
+              <div class="bg-primary-subtle rounded-top" style="height: 40%; width: 40px"></div>
+              <div class="bg-primary-subtle rounded-top" style="height: 60%; width: 40px"></div>
+              <div class="bg-primary rounded-top" style="height: 90%; width: 40px"></div>
+              <div class="bg-primary-subtle rounded-top" style="height: 50%; width: 40px"></div>
+              <div class="bg-primary rounded-top" style="height: 75%; width: 40px"></div>
+            </div>
+            <div class="d-flex justify-content-between mt-2 text-muted small">
+              <span>Tháng 1</span><span>Tháng 2</span><span>Tháng 3</span><span>Tháng 4</span><span>Tháng 5</span>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="card p-4 h-100 text-center">
+            <h6 class="fw-bold mb-3">Nguồn lưu lượng</h6>
+            <div class="position-relative d-inline-block mx-auto mb-4" style="
+              width: 150px;
+              height: 150px;
+              border-radius: 50%;
+              background: conic-gradient(#4361ee 70%, #e9ecef 0);
+            ">
+              <div class="position-absolute top-50 start-50 translate-middle bg-white rounded-circle" style="
+                width: 100px;
+                height: 100px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+              ">
+                <span class="fw-bold">70% Ads</span>
+              </div>
+            </div>
+            <div class="text-start small">
+              <p>
+                <i class="bi bi-circle-fill text-primary me-2"></i> Quảng cáo Facebook
+              </p>
+              <p>
+                <i class="bi bi-circle-fill text-light me-2 text-secondary"></i>
+                Tìm kiếm tự nhiên
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
+{% endblock %}

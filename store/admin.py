@@ -6,8 +6,10 @@ from .models import Brand, Product, Category, Banner, ProductImage
 class CategoryAdmin(admin.ModelAdmin):
     fieldsets = [
         ("Name", {"fields": ["name"]}),
+        ("Parent", {"fields": ["parent"]}),
+        ("Slug", {"fields": ["slug"]}),
         ("Icon code", {"fields": ["icon_code"]}),
-        # ("Images", {"fields": ["image"]}),  # Thêm field image
+        ("Images", {"fields": ["image"]}),  # Thêm field image
         ("Status", {"fields": ["is_active", "is_featured", "display_order"]}),
     ]
     list_display = ["name", "is_active", "display_order"]

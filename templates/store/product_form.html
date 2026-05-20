@@ -1,12 +1,59 @@
 {% extends 'base.html' %}
+{% load crispy_forms_tags %}
+{% block navbar %}
+  {% include 'partials/navbar.html' %}
+{% endblock %}
+
 {% block content %}
+  <!-- Add Product -->
+  <section id="add-product" class="page-content">
+    <h3 class="fw-bold mb-4">Thêm sản phẩm mới</h3>
+
+    <form action="{% url 'store:product_create' %}" method="POST" enctype="multipart/form-data">
+      {% csrf_token %}
+      <div class="row g-4">
+        <div class="col-lg-8">
+          <div class="card p-4">
+            <h6 class="fw-bold mb-3">Thông tin cơ bản</h6>
+            {{ form.as_p }}
+    
+
+        <div class="col-lg-4">
+          <div class="card p-4 mb-4 text-center">
+            <h6 class="fw-bold mb-3 text-start">Hình ảnh sản phẩm</h6>
+            <div class="border border-dashed rounded-3 p-5 bg-light mb-3" style="border-style: dashed !important">
+              <i class="bi bi-cloud-arrow-up fs-1 text-primary"></i>
+              <p class="small text-muted mt-2">Chọn một hoặc nhiều ảnh sản phẩm</p>
+              <input type="file" name="images" class="form-control" id="productImg" multiple required onchange="previewImages(event)" />
+            </div>
+          </div>
+          <div id="preview"></div>
+
+          <div class="card p-4">
+            <h6 class="fw-bold mb-3">Trạng thái hiển thị</h6>
+            <div class="form-check form-switch mb-3">
+              <input class="form-check-input" type="checkbox" name="is_active" value="true" id="isActive" checked />
+              <label class="form-check-label" for="isActive">Cho phép kinh doanh</label>
+            </div>
+            <div class="form-check form-switch mb-3">
+              <input class="form-check-input" type="checkbox" name="is_featured" value="true" id="isFeatured" />
+              <label class="form-check-label" for="isFeatured">Sản phẩm nổi bật (Hot)</label>
+            </div>
+            <button type="submit" class="btn btn-primary w-100 py-2">Lưu sản phẩm</button>
+            <button type="button" class="btn btn-light w-100 mt-2 text-muted" onclick="showPage('products', this)">Hủy bỏ</button>
+          </div>
+        </div>
+      </div>
+    </form>
+  </section>
+
   <div class="container d-flex justify-content-center mt-3">
-    <div class="shadow p-3 py-4">
+    <div class="shadow">
       <h2 class="mt-3 text-center text-primary">{{ title }}</h2>
       <div class="p-3">
         <form action="{% url 'store:product_create' %}" method="post" enctype="multipart/form-data">
           {% csrf_token %}
-          {{ form.as_p }}
+          {{ form|crispy }}
 
           <input type="file" name="images" multiple onchange="previewImages(event)" />
           <div id="preview"></div>

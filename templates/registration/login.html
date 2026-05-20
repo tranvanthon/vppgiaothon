@@ -1,13 +1,53 @@
 {% extends 'base.html' %}
 {% load static %}
-{% block content %}
-  <form action="" method="post">
-    {% csrf_token %}
-    {{ form.as_p }}
-    <input type="submit" value="{{ title }}">
-  </form>
-{% endblock content %}
+{% load socialaccount %}
+{% block title %}
+  Đăng nhập | GTBook
+{% endblock %}
 
 {% block content %}
-  
-{% endblock content %}
+  <div class="wrapper wow fadeInLeft" data-wow-delay="0.1s">
+    <div class="title">{{ title }}</div>
+    <form class="p-3 mt-3" action="{% url 'account_login' %}" method="post" autocomplete="off">
+      {% csrf_token %}
+
+      {% if form.errors %}
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+          <strong>Thông báo!</strong> Email hoặc mật khẩu không đúng.
+          <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+      {% endif %}
+
+      <div class="form-field d-flex align-items-center">
+        <span class="bi bi-person me-2 fs-3"></span>
+        {{ form.username }}
+      </div>
+      <div class="form-field d-flex align-items-center">
+        <span class="bi bi-key-fill fs-3 ms-2"></span>
+        {{ form.password }}
+        <span class="eye"><span class="bi bi-eye toggle-password me-3 fs-3" data-target="id_password"></span></span>
+      </div>
+      <button class="btn mt-3">{{ title }}</button>
+    </form>
+    <div class="text-center fs-6">
+      <a href="{% url 'password_reset' %}">Quên mật khẩu?</a> or <a href="{% url 'account_signup' %}">Đăng ký</a>
+    </div>
+    <div class="login-with">
+      <p class="mt-5 text-center">Hoặc đăng nhập với</p>
+    </div>
+    <div class="d-flex justify-content-between mt-5">
+      <div class="social google">
+        <a href="{% provider_login_url 'google' %}"><img src="{% static 'images/icon/google.png' %}" alt="google" /></a>
+      </div>
+      <div class="social facebook">
+        <img src="{% static 'images/icon/facebook.png' %}" alt="facebook" />
+      </div>
+      <div class="social twiter">
+        <img src="https://www.freepnglogos.com/uploads/twitter-logo-png/twitter-bird-symbols-png-logo-0.png" alt="twiter" />
+      </div>
+      <div class="social apple">
+        <img src="{% static 'images/icon/apple.png' %}" alt="apple" />
+      </div>
+    </div>
+  </div>
+{% endblock %}

@@ -1,0 +1,40 @@
+<div class="modal fade" id="updateCategoryModal" tabindex="-1" aria-labelledby="updateCategoryModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title fw-bold" id="updateCategoryModalLabel">Cập nhật danh mục</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <form id="updateCategoryForm" method="POST" enctype="multipart/form-data">
+        {% csrf_token %}
+        <div class="modal-body">
+          <div class="mb-3">
+            <label class="form-label text-muted small">Tên danh mục</label>
+            <input type="text" name="name" id="edit_cat_name" class="form-control" required />
+          </div>
+          <div class="mb-3">
+            <label class="form-label text-muted small">Danh mục cha (Nếu có)</label>
+            <select name="parent" id="edit_cat_parent" class="form-select">
+              <option value="">--- Không có (Là danh mục gốc) ---</option>
+              {% for category in categories %}
+                <option value="{{ category.id }}">{{ category.name }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="mb-3">
+            <label class="form-label text-muted small">Biểu tượng / Mã Icon Code</label>
+            <input type="text" name="icon_code" id="edit_cat_icon" class="form-control" />
+          </div>
+          <div class="mb-3">
+            <label class="form-label text-muted small">Hình ảnh danh mục (Để trống nếu giữ nguyên)</label>
+            <input type="file" name="image" class="form-control" />
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-light" data-bs-dismiss="modal">Hủy</button>
+          <button type="submit" class="btn btn-primary">Lưu thay đổi</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>

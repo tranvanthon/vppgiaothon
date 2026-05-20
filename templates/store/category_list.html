@@ -11,22 +11,22 @@
 {% endblock %}
 
 {% block navbar %}
-  {% include 'parterials/navbar.html' %}
+  {% include 'partials/navbar.html' %}
 {% endblock %}
 
 {% block content %}
   <div class="container py-4">
     <!-- Breadcrumb - Giúp SEO và điều hướng -->
-    <nav aria-label="breadcrumb">
+    <nav aria-label="breadcrumb" class="mb-4">
       <ol class="breadcrumb">
-        {% for breadcrumb in breadcrumbs %}
-          {% if breadcrumb.url %}
-            <li class="breadcrumb-item">
-              <a href="{{ breadcrumb.url }}">{{ breadcrumb.name }}</a>
-            </li>
-          {% else %}
-            <li class="breadcrumb-item active" aria-current="page">{{ breadcrumb.name }}</li>
-          {% endif %}
+        {% for name, url in custom_breadcrumb.items %}
+          <li class="breadcrumb-item {% if forloop.last %}active{% endif %}">
+            {% if not forloop.last %}
+              <a href="{{ url }}" class="text-decoration-none">{{ name }}</a>
+            {% else %}
+              {{ name }}
+            {% endif %}
+          </li>
         {% endfor %}
       </ol>
     </nav>
@@ -155,6 +155,8 @@
               <li class="page-item">
                 <a class="page-link"
                   href="?page=1{% if request.GET.sort %}
+                    
+                    
                     &sort={{ request.GET.sort }}
                   {% endif %}">
                   &laquo; Đầu
@@ -163,6 +165,8 @@
               <li class="page-item">
                 <a class="page-link"
                   href="?page={{ page_obj.previous_page_number }}{% if request.GET.sort %}
+                    
+                    
                     &sort={{ request.GET.sort }}
                   {% endif %}">
                   Trước
@@ -178,6 +182,8 @@
               <li class="page-item">
                 <a class="page-link"
                   href="?page={{ page_obj.next_page_number }}{% if request.GET.sort %}
+                    
+                    
                     &sort={{ request.GET.sort }}
                   {% endif %}">
                   Sau
@@ -186,6 +192,8 @@
               <li class="page-item">
                 <a class="page-link"
                   href="?page={{ page_obj.paginator.num_pages }}{% if request.GET.sort %}
+                    
+                    
                     &sort={{ request.GET.sort }}
                   {% endif %}">
                   Cuối &raquo;

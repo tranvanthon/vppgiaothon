@@ -1,0 +1,76 @@
+/* Layout Framework */
+.dashboard-container {
+    display: flex;
+    min-height: 100vh;
+    background-color: #f8f9fa;
+}
+
+.sidebar {
+    width: 280px;
+    background: #fff;
+    border-right: 1px solid #eee;
+    position: fixed;
+    height: 100vh;
+    overflow-y: auto;
+    z-index: 1000;
+}
+
+.main-content {
+    margin-left: 280px;
+    flex: 1;
+    padding: 30px;
+}
+
+/* Sidebar Navigation */
+.nav-link-custom {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 20px;
+    color: var(--bs-blue);
+    text-decoration: none;
+    border-radius: 10px;
+    margin: 5px 15px;
+    transition: 0.3s;
+    cursor: pointer;
+}
+
+.nav-link-custom:hover,
+.nav-link-custom.active {
+    background: rgba(39, 138, 174, 0.1);
+    color: #278aae;
+    font-weight: 600;
+}
+
+/* Thẻ thống kê Customer */
+.stat-card {
+    border: none;
+    border-radius: 15px;
+    padding: 25px;
+    color: #fff;
+    transition: 0.3s;
+}
+
+.stat-card.blue {
+    background: linear-gradient(45deg, #278aae, #5ebad9);
+}
+
+.stat-card.orange {
+    background: linear-gradient(45deg, #f39c12, #f1c40f);
+}
+
+.stat-card.green {
+    background: linear-gradient(45deg, #27ae60, #2ecc71);
+}
+
+.table-custom thead {
+    background-color: #f8f9fa;
+}
+
+.page-content {
+    display: none;
+}
+
+.page-content.active {
+    display: block;
+}

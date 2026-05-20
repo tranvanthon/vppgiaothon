@@ -1,0 +1,88 @@
+<div class="modal fade" id="updateProductModal" tabindex="-1" aria-labelledby="updateProductModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title fw-bold" id="updateProductModalLabel">Cập nhật sản phẩm</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <form id="updateProductForm" method="POST" enctype="multipart/form-data">
+        {% csrf_token %}
+        <div class="modal-body">
+          <div class="row g-3">
+            <div class="col-12">
+              <label class="form-label text-muted small">Tên sản phẩm</label>
+              <input type="text" name="name" id="edit_product_name" class="form-control" required />
+            </div>
+            <div class="col-md-6">
+              <label class="form-label text-muted small">Mã SKU</label>
+              <input type="text" name="sku" id="edit_product_sku" class="form-control" required />
+            </div>
+            <div class="col-md-6">
+              <label class="form-label text-muted small">Danh mục</label>
+              <select name="category" id="edit_product_category" class="form-select" required>
+                {% for category in categories %}
+                  <option value="{{ category.id }}">{{ category.name }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label text-muted small">Thương hiệu</label>
+              <select name="brand" id="edit_product_brand" class="form-select">
+                <option value="">---------</option>
+                {% for brand in brands %}
+                  <option value="{{ brand.id }}">{{ brand.name }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label text-muted small">Màu sắc</label>
+              <select name="color" id="edit_product_color" class="form-select">
+                <option value="BLACK">Black</option>
+                <option value="GOLD">Gold</option>
+                <option value="RED">Red</option>
+              </select>
+            </div>
+            <div class="col-12">
+              <label class="form-label text-muted small">Mô tả ngắn</label>
+              <input type="text" name="short_description" id="edit_product_short" class="form-control" />
+            </div>
+            <div class="col-12">
+              <label class="form-label text-muted small">Mô tả chi tiết</label>
+              <textarea name="description" id="edit_product_desc" class="form-control" rows="4"></textarea>
+            </div>
+            <div class="col-md-4">
+              <label class="form-label text-muted small">Giá bán (VNĐ)</label>
+              <input type="number" name="price" step="0.01" id="edit_product_price" class="form-control" required />
+            </div>
+            <div class="col-md-4">
+              <label class="form-label text-muted small">Giá nhập (VNĐ)</label>
+              <input type="number" name="cost_price" step="0.01" id="edit_product_cost" class="form-control" />
+            </div>
+            <div class="col-md-4">
+              <label class="form-label text-muted small">Số lượng kho</label>
+              <input type="number" name="stock" id="edit_product_stock" class="form-control" />
+            </div>
+            <div class="col-12">
+              <label class="form-label text-muted small">Thay đổi hình ảnh (Để trống nếu giữ nguyên)</label>
+              <input type="file" name="images" class="form-control" multiple />
+            </div>
+            <div class="col-12 d-flex gap-4 mt-2">
+              <div class="form-check form-switch">
+                <input class="form-check-input" type="checkbox" name="is_active" value="true" id="edit_product_active" />
+                <label class="form-check-label" for="edit_product_active">Cho phép kinh doanh</label>
+              </div>
+              <div class="form-check form-switch">
+                <input class="form-check-input" type="checkbox" name="is_active" value="true" id="edit_product_featured" />
+                <label class="form-check-label" for="edit_product_featured">Sản phẩm nổi bật (Hot)</label>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-light" data-bs-dismiss="modal">Hủy</button>
+          <button type="submit" class="btn btn-primary">Cập nhật sản phẩm</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>

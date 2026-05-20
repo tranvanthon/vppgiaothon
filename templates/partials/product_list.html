@@ -8,13 +8,12 @@
 {% endif %}
 ">
   <div class="product-card bg-white h-100 shadow-sm border-0">
+    <a href="{% url 'store:product_detail' product.slug %}">
     <div class="position-relative">
       {% with main_image=product.images.all|first %}
-        {% if main_image %}
+
           <img src="{{ main_image.imageURL }}" class="product-img w-100" alt="{{ product.name }}" />
-        {% else %}
-          <img src="/static/images/default-product.png" class="product-img w-100" alt="{{ product.name }}" />
-        {% endif %}
+
       {% endwith %}
       
       {# Badge giảm giá nếu có #}
@@ -42,7 +41,7 @@
         <i class="bi bi-heart"></i>
       </button>
     </div>
-    
+    </a>
     <div class="p-3">
       {# Thương hiệu #}
       {% if product.brand %}
@@ -130,7 +129,7 @@
         </button>
         
         {% if user.is_authenticated %}
-        <a href="{% url 'store:product_update' product.slug %}" class="btn btn-sm btn-warning">Chỉnh sửa sản phẩm</a>
+        <a href="{% url 'store:product_update' product.slug %}" class="btn btn-sm btn-warning rounded-pill">Update</a>
         {% endif %}
           
       </div>

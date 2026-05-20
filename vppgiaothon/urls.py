@@ -6,11 +6,17 @@ from store import views as store_views
 from django.contrib.auth import views as auth_views
 
 urlpatterns = [
-    path('', include('store.urls'),),
-    path('admin/', admin.site.urls),
-
+    path(
+        "profiles/",
+        include("profiles.urls"),
+    ),
+    path(
+        "",
+        include("store.urls"),
+    ),
+    path("profiles/", include("allauth.urls")),
+    path("admin/", admin.site.urls),
 ]
 if settings.DEBUG:
-    urlpatterns += static(settings.STATIC_URL,
-                          document_root=settings.STATIC_ROOT)
+    urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

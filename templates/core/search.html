@@ -1,0 +1,23 @@
+{% extends 'base.html' %}
+
+{% block content %}
+  <div class="container mt-4">
+    <h2>Kết quả tìm kiếm cho: "{{ query }}"</h2>
+    <div class="row">
+      {% for product in products %}
+        <div class="col-md-3 mb-4">
+          <div class="card h-100">
+            <img src="{{ product.image.url }}" class="card-img-top" alt="{{ product.name }}" />
+            <div class="card-body">
+              <h5 class="card-title">{{ product.name }}</h5>
+              <p class="card-text">{{ product.price|floatformat:0 }} ₫</p>
+              <a href="{% url 'product:product_detail' product.product_slug %}" class="btn btn-primary">Xem chi tiết</a>
+            </div>
+          </div>
+        </div>
+      {% empty %}
+        <p>Không tìm thấy sản phẩm nào.</p>
+      {% endfor %}
+    </div>
+  </div>
+{% endblock %}

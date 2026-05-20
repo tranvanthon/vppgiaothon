@@ -16,8 +16,15 @@
           {% for category in featured_categories %}
             <div class="col-6 col-md-3">
               <a href="{{ category.get_absolute_url }}" class="cat-item shadow-sm">
-                {% if category.icon_code %}
+                {% if category.image %}
+                  <img src="{{ category.imageURL }}" alt="{{ category.name }}" />
+                {% elif category.icon_code %}
                   <i class="{{ category.icon_code }} fs-2"></i>
+                {% else %}
+                  <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                    <p class="text-primary">Bạn chưa upload ảnh hoặc icon bootstrap</p>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                  </div>
                 {% endif %}
 
                 <br /><b>{{ category.name }}</b>

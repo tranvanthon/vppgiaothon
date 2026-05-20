@@ -6,6 +6,7 @@
     --bs-danger: #d41f31;
     --bg-light: #f8f9fa;
 }
+
 :root {
     --bs-primary: #278aae;
     --bs-primary-rgb: 39, 138, 174;
@@ -46,6 +47,34 @@ body {
     background-color: #fff;
 }
 
+/* Chỉ áp dụng cho các thành phần tương tác */
+a,
+button,
+.btn,
+.card,
+.nav-link {
+    transition: background-color 0.25s ease, color 0.2s ease;
+}
+
+
+
+.nav-link {
+    color: #6a7d8d;
+    padding: 0.8rem 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+}
+
+.nav-link:hover,
+.nav-link.active {
+    color: var(--accent-color);
+    background: rgba(67, 97, 238, 0.05);
+}
+
+
+
 .btn-primary {
     background-color: var(--bs-primary);
     border-color: var(--bs-primary);
@@ -53,4 +82,22 @@ body {
 
 .text-primary {
     color: var(--bs-primary) !important;
+}
+
+.btn-primary:hover {
+    background-color: var(--bs-blue);
+    border-color: var(--bs-blue);
+}
+
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }

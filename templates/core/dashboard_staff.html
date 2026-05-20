@@ -1,0 +1,319 @@
+{% extends 'base.html' %} {% block content %}
+<div class="sidebar shadow-sm">
+  <div class="p-4 mb-3">
+    <h4 class="fw-bold text-primary">
+      <a href="{% url 'store:home' %}" class="nav-link">
+        <i class="bi bi-shop-window me-2"></i>E-STORE Staff
+      </a>
+    </h4>
+  </div>
+  <div class="nav flex-column">
+    <div class="nav-link" onclick="showPage('dashboard', this)">
+      <i class="bi bi-speedometer2"></i> Dashboard
+    </div>
+    <div class="nav-link" onclick="showPage('products', this)">
+      <i class="bi bi-box-seam"></i> Sản phẩm
+    </div>
+    <div class="nav-link" onclick="showPage('orders', this)">
+      <i class="bi bi-cart3"></i> Đơn hàng
+    </div>
+    <div class="nav-link" onclick="showPage('customers', this)">
+      <i class="bi bi-people"></i> Khách hàng
+    </div>
+    <div class="nav-link" onclick="showPage('coupons', this)">
+      <i class="bi bi-ticket-perforated"></i> Mã giảm giá
+    </div>
+    <div class="nav-link" onclick="showPage('reports', this)">
+      <i class="bi bi-pie-chart"></i> Báo cáo
+    </div>
+  </div>
+</div>
+
+<div class="main-content">
+  <!-- Dashboard -->
+  <section id="dashboard" class="page-content active">
+    <h3 class="fw-bold mb-4">Tổng quan</h3>
+    <div class="row g-4 mb-4">
+      <div class="col-md-4">
+        <div class="card p-4 bg-primary text-white">
+          <h6>Doanh thu ngày</h6>
+          <h2 class="fw-bold">12.500.000đ</h2>
+          <small><i class="bi bi-arrow-up"></i> +15% so với hôm qua</small>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="card p-4 bg-white">
+          <h6>Đơn hàng mới</h6>
+          <h2 class="fw-bold text-dark">48</h2>
+          <small class="text-success"
+            ><i class="bi bi-check-circle"></i> 5 đơn đang chờ</small
+          >
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="card p-4 bg-white">
+          <h6>Lượt truy cập</h6>
+          <h2 class="fw-bold text-dark">1,204</h2>
+          <small class="text-muted">Tính trong 24h qua</small>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Products -->
+  <section id="products" class="page-content">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+      <h3 class="fw-bold">Quản lý sản phẩm</h3>
+      <button class="btn btn-primary rounded-pill px-4">
+        <i class="bi bi-plus-lg"></i> Thêm sản phẩm
+      </button>
+    </div>
+    <div class="row g-4">
+      <div class="col-md-3">
+        <div class="card p-3">
+          <img
+            src="https://images.unsplash.com/photo-1523275335684-37898b6baf30?auto=format&fit=crop&w=300"
+            class="product-img mb-3"
+            alt="Product"
+          />
+          <h6 class="fw-bold">Đồng hồ SmartWatch</h6>
+          <p class="text-muted small">Điện tử • 120 trong kho</p>
+          <div class="d-flex justify-content-between align-items-center">
+            <span class="fw-bold text-primary">2.450.000đ</span>
+            <div class="btn-group">
+              <button class="btn btn-sm btn-outline-secondary border-0">
+                <i class="bi bi-pencil"></i>
+              </button>
+              <button class="btn btn-sm btn-outline-danger border-0">
+                <i class="bi bi-trash"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-3">
+        <div class="card p-3">
+          <img
+            src="https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=300"
+            class="product-img mb-3"
+            alt="Product"
+          />
+          <h6 class="fw-bold">Tai nghe Bluetooth</h6>
+          <p class="text-muted small">Phụ kiện • 45 trong kho</p>
+          <span class="fw-bold text-primary">1.200.000đ</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Orders -->
+  <section id="orders" class="page-content">
+    <h3 class="fw-bold mb-4">Quản lý đơn hàng</h3>
+    <div class="card shadow-sm border-0">
+      <div class="p-3 bg-white border-bottom d-flex gap-2">
+        <button class="btn btn-sm btn-primary">Tất cả</button>
+        <button class="btn btn-sm btn-outline-secondary">Chờ xử lý</button>
+        <button class="btn btn-sm btn-outline-secondary">Đang giao</button>
+        <button class="btn btn-sm btn-outline-secondary">Đã hoàn thành</button>
+      </div>
+      <div class="table-responsive p-3">
+        <table class="table align-middle">
+          <thead>
+            <tr class="text-muted small">
+              <th>MÃ ĐƠN</th>
+              <th>KHÁCH HÀNG</th>
+              <th>TRẠNG THÁI</th>
+              <th>PHƯƠNG THỨC</th>
+              <th>TỔNG TIỀN</th>
+              <th>THAO TÁC</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><span class="fw-bold">#ORD-9921</span></td>
+              <td>Nguyễn Minh Tâm</td>
+              <td>
+                <span class="badge bg-warning-subtle text-warning"
+                  >Đang xử lý</span
+                >
+               </td>
+              <td>Chuyển khoản</td>
+              <td class="fw-bold">1.250.000đ</td>
+              <td>
+                <button class="btn btn-light btn-sm">
+                  <i class="bi bi-printer"></i> In đơn
+                </button>
+               </td>
+             </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- Customers -->
+  <section id="customers" class="page-content">
+    <h3 class="fw-bold mb-4">Danh sách khách hàng</h3>
+    <div class="card">
+      <div class="table-responsive p-3">
+        <table class="table table-hover align-middle">
+          <thead>
+            <tr class="text-muted small">
+              <th>KHÁCH HÀNG</th>
+              <th>EMAIL</th>
+              <th>TỔNG CHI TIÊU</th>
+              <th>TRẠNG THÁI</th>
+              <th>HÀNH ĐỘNG</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>
+                <div class="d-flex align-items-center gap-2">
+                  <img src="https://i.pravatar.cc/150?u=1" class="avatar" />
+                  <span class="fw-semibold">Lê Anh Tuấn</span>
+                </div>
+               </td>
+              <td>tuan.le@email.com</td>
+              <td class="fw-bold">45.000.000đ</td>
+              <td>
+                <span class="badge bg-success-subtle text-success"
+                  >Thành viên Kim cương</span
+                >
+               </td>
+              <td>
+                <button class="btn btn-light btn-sm">
+                  <i class="bi bi-eye"></i>
+                </button>
+               </td>
+             </tr>
+            <tr>
+              <td>
+                <div class="d-flex align-items-center gap-2">
+                  <img src="https://i.pravatar.cc/150?u=2" class="avatar" />
+                  <span class="fw-semibold">Nguyễn Mai Anh</span>
+                </div>
+               </td>
+              <td>maianh@email.com</td>
+              <td class="fw-bold">12.200.000đ</td>
+              <td>
+                <span class="badge bg-primary-subtle text-primary"
+                  >Thành viên mới</span
+                >
+               </td>
+              <td>
+                <button class="btn btn-light btn-sm">
+                  <i class="bi bi-eye"></i>
+                </button>
+               </td>
+             </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- Coupons -->
+  <section id="coupons" class="page-content">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+      <h3 class="fw-bold">Mã giảm giá (Marketing)</h3>
+    </div>
+    <div class="row g-4">
+      <div class="col-md-4">
+        <div
+          class="card p-3 border-dashed border-2 text-center"
+          style="
+            border-style: dashed !important;
+            border-color: #4361ee !important;
+          "
+        >
+          <div class="display-6 fw-bold text-primary">SUMMER20</div>
+          <p class="mb-0 mt-2 fw-bold">Giảm 20% cho đồ hè</p>
+          <small class="text-muted">Hết hạn: 30/06/2026</small>
+          <div class="mt-3">
+            <span class="badge bg-success">Đang chạy</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Reports -->
+  <section id="reports" class="page-content">
+    <h3 class="fw-bold mb-4">Phân tích kinh doanh</h3>
+    <div class="row g-4">
+      <div class="col-md-8">
+        <div class="card p-4 h-100">
+          <h6 class="fw-bold mb-4">Tăng trưởng doanh thu</h6>
+          <div
+            class="d-flex align-items-end gap-3 justify-content-between"
+            style="height: 200px"
+          >
+            <div
+              class="bg-primary-subtle rounded-top"
+              style="height: 40%; width: 40px"
+            ></div>
+            <div
+              class="bg-primary-subtle rounded-top"
+              style="height: 60%; width: 40px"
+            ></div>
+            <div
+              class="bg-primary rounded-top"
+              style="height: 90%; width: 40px"
+            ></div>
+            <div
+              class="bg-primary-subtle rounded-top"
+              style="height: 50%; width: 40px"
+            ></div>
+            <div
+              class="bg-primary rounded-top"
+              style="height: 75%; width: 40px"
+            ></div>
+          </div>
+          <div class="d-flex justify-content-between mt-2 text-muted small">
+            <span>Tháng 1</span><span>Tháng 2</span><span>Tháng 3</span
+            ><span>Tháng 4</span><span>Tháng 5</span>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="card p-4 h-100 text-center">
+          <h6 class="fw-bold mb-3">Nguồn lưu lượng</h6>
+          <div
+            class="position-relative d-inline-block mx-auto mb-4"
+            style="
+              width: 150px;
+              height: 150px;
+              border-radius: 50%;
+              background: conic-gradient(#4361ee 70%, #e9ecef 0);
+            "
+          >
+            <div
+              class="position-absolute top-50 start-50 translate-middle bg-white rounded-circle"
+              style="
+                width: 100px;
+                height: 100px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+              "
+            >
+              <span class="fw-bold">70% Ads</span>
+            </div>
+          </div>
+          <div class="text-start small">
+            <p>
+              <i class="bi bi-circle-fill text-primary me-2"></i> Quảng cáo
+              Facebook
+            </p>
+            <p>
+              <i class="bi bi-circle-fill text-light me-2 text-secondary"></i>
+              Tìm kiếm tự nhiên
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+</div>
+{% endblock content %}
