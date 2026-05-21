@@ -1,6 +1,6 @@
 from django.db import models
-import os
-from tools.get_upload_path import get_upload_path
+import os, glob
+from django.core.files.storage import default_storage
 from django.conf import settings
 from PIL import Image
 from django.contrib.auth.models import (
@@ -8,6 +8,7 @@ from django.contrib.auth.models import (
     PermissionsMixin,
     BaseUserManager,
 )
+from core.paths.upload import original_upload_path
 from django.utils import timezone
 
 
@@ -98,7 +99,7 @@ class Profile(models.Model):
     user = models.OneToOneField(
         settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="profile"
     )
-    avatar = models.ImageField(upload_to=get_upload_path, null=True, blank=True)
+    avatar = models.ImageField(upload_to=original_upload_path, null=True, blank=True)
     address = models.CharField(max_length=255, blank=True, null=True)
     phone = models.CharField(max_length=50, blank=True, null=True)
     birthday = models.DateField(null=True, blank=True)
@@ -107,29 +108,61 @@ class Profile(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     def save(self, *args, **kwargs):
+        # 1. Kiểm tra nếu user THAY ĐỔI hoặc XÓA avatar
         if self.pk:
-            old = type(self).objects.get(pk=self.pk)
-            if old.avatar == self.avatar:
-                return super().save(*args, **kwargs)
+            old_instance = type(self).objects.filter(pk=self.pk).first()
+            if (
+                old_instance
+                and old_instance.avatar
+                and old_instance.avatar != self.avatar
+            ):
+                old_avatar_name = old_instance.avatar.name
 
+                # A. Xóa file ảnh gốc
+                try:
+                    if default_storage.exists(old_avatar_name):
+                        default_storage.delete(old_avatar_name)
+                except Exception as e:
+                    print(f"Lỗi khi xóa ảnh gốc: {e}")
+
+                # B. Quét và xóa TẤT CẢ các bản sao lưu, bản resize liên quan đến file cũ
+                try:
+                    filename = os.path.basename(old_avatar_name)
+                    app_name = self._meta.app_label
+                    model_name = self._meta.model_name
+                    base_dir_relative = os.path.join("uploads", app_name, model_name)
+                    base_dir_absolute = default_storage.path(base_dir_relative)
+
+                    search_pattern = os.path.join(base_dir_absolute, "**", filename)
+                    found_files = glob.glob(search_pattern, recursive=True)
+
+                    for file_path in found_files:
+                        try:
+                            if os.path.exists(file_path):
+                                os.remove(file_path)
+                        except Exception as e:
+                            print(f"Lỗi khi xóa file: {file_path} - {e}")
+
+                except Exception as e:
+                    print(f"Lỗi khi quét dọn ảnh cache resize: {e}")
+
+        # 2. Thực hiện lưu model
         super().save(*args, **kwargs)
 
-        if self.avatar:
+        # 3. Tối ưu ảnh gốc (resize nếu quá lớn)
+        if self.avatar and default_storage.exists(self.avatar.name):
             try:
                 img = Image.open(self.avatar.path)
-
-                if img.width > 300 or img.height > 300:
-                    img.thumbnail((300, 300))
-
-                img.save(self.avatar.path, optimize=True, quality=70)
-
-            except FileNotFoundError:
-                print("Image file not found, skip processing")
+                if img.width > 1200 or img.height > 1200:
+                    img.thumbnail((1200, 1200), Image.Resampling.LANCZOS)
+                img.save(self.avatar.path, optimize=True, quality=85)
+            except Exception as e:
+                print(f"Lỗi xử lý tối ưu ảnh gốc: {e}")
 
     @property
     def display_avatar(self):
         """Trả về URL avatar hoặc avatar mặc định"""
-        if self.avatar and os.path.exists(self.avatar.path):
+        if self.avatar and default_storage.exists(self.avatar.name):
             return self.avatar.url
         else:
             return "/static/images/default/avatar.png"

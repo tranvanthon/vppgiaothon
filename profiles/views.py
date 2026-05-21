@@ -1,4 +1,6 @@
 from django.views.generic import UpdateView, DetailView, CreateView
+
+from core.services.image import get_or_create_image_version
 from .decorators import role_required
 
 from .forms import (
@@ -9,14 +11,13 @@ from .forms import (
 )
 from django.urls import reverse_lazy
 
-from django.contrib.auth.views import LoginView, PasswordChangeView, PasswordResetView
+from django.contrib.auth.views import LoginView, PasswordResetView
 from django.shortcuts import render, redirect
 from .models import Profile
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.http import require_http_methods
 from django.http import HttpResponse, JsonResponse
 from django.contrib import messages
-import traceback
 from datetime import datetime
 from django.contrib.auth import logout
 
@@ -24,8 +25,11 @@ from django.contrib.auth import logout
 @login_required
 def profile_view(request):
     """Hiển thị trang profile"""
-    profile = Profile.objects.all().values()
-    context = {"user": request.user, "profile": profile}
+    user_profile = Profile.objects.filter(user=request.user).first()
+    context = {
+        "user": request.user,
+        "profile": user_profile,
+    }
     return render(request, "registration/profile.html", context)
 
 
@@ -35,11 +39,11 @@ def edit_profile(request):
     try:
         user = request.user
         profile, created = Profile.objects.get_or_create(user=user)
-        if created:
-            print("Auto-created profile for {user.email} via get_or_create")
+        
         if "name" in request.POST:
             user.name = request.POST.get("name", "")
             user.save()
+        
         profile.phone = request.POST.get("phone", "") or None
         profile.address = request.POST.get("address", "") or None
         profile.sex = request.POST.get("sex", "") or None
@@ -54,6 +58,7 @@ def edit_profile(request):
                 profile.birthday = None
         else:
             profile.birthday = None
+        
         profile.save()
 
         return JsonResponse(
@@ -64,38 +69,32 @@ def edit_profile(request):
         )
 
     except Exception as e:
-        print(f"Error in edit_profile: {e}")
-        traceback.print_exc()
         return JsonResponse({"success": False, "message": f"Lỗi: {str(e)}"}, status=500)
 
 
 @login_required
-@require_http_methods(["POST"])  # Chỉ cho phép POST
+@require_http_methods(["POST"])
 def upload_avatar(request):
     try:
-        # Kiểm tra file có tồn tại không
         if "avatar" not in request.FILES:
-            print("ERROR: No 'avatar' in request.FILES")
             return JsonResponse(
                 {"success": False, "message": "Không tìm thấy file ảnh"}, status=400
             )
+        
         avatar_file = request.FILES["avatar"]
-        print(
-            f"File found: {avatar_file.name}, size: {avatar_file.size}, type: {avatar_file.content_type}"
-        )
-        # Kiểm tra profile có tồn tại không
-        try:
-            profile = request.user.profile
-            print(f"Profile exists: {profile}")
-        except Exception as e:
-            print(f"Profile error: {e}")
-            profile = Profile.objects.create(user=request.user)
-            print(f"Created new profile: {profile}")
-        # Save avatar
+        
+        # Validate file type
+        if not avatar_file.content_type.startswith('image/'):
+            return JsonResponse(
+                {"success": False, "message": "File phải là hình ảnh"}, status=400
+            )
+        
+        # Get or create profile
+        profile, created = Profile.objects.get_or_create(user=request.user)
+        
+        # Update avatar - old avatar will be auto-deleted by Profile.save()
         profile.avatar = avatar_file
         profile.save()
-        print(f"Avatar saved successfully!")
-        print(f"Avatar URL: {profile.avatar.url}")
 
         return JsonResponse(
             {
@@ -106,14 +105,6 @@ def upload_avatar(request):
         )
 
     except Exception as e:
-        print("\n" + "!" * 60)
-        print("ERROR OCCURRED:")
-        print(f"Error type: {type(e).__name__}")
-        print(f"Error message: {str(e)}")
-        print("\nTraceback:")
-        traceback.print_exc()
-        print("!" * 60 + "\n")
-
         return JsonResponse(
             {
                 "success": False,

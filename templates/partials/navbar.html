@@ -1,5 +1,5 @@
 {% load static %}
-
+{% load image_tags %}
 <div class="py-2 bg-info text-white text-center small">Chào mừng bạn đến với E-STORE! Miễn phí vận chuyển cho đơn hàng từ 500k.</div>
 
 <nav class="navbar navbar-expand-lg navbar-light bg-white sticky-top">
@@ -30,7 +30,7 @@
       <div class="nav-action-dropdown">
         {% if request.user.is_authenticated %}
           <a class="me-3 text-primary nav-link" href="#">
-            <img class="rounded-circle" src="{{ user.profile.display_avatar }}" alt="{{ user.get_short_name }}" width="50" height="50" />
+            <img class="rounded-circle object-fit-cover" src="{{ user|get_avatar_url:'50,50' }}" alt="{{ user.get_short_name }}" width="50" height="50" />
             <small class>Xin chào {{ user.get_short_name }}</small>
           </a>
           <div class="dropdown-content" style="width: 300px">
@@ -135,7 +135,7 @@
         <div class="nav-action-dropdown">
           {% if request.user.is_authenticated %}
             <a class="me-3 text-primary nav-link" href="#">
-              <img class="rounded-circle" src="{{ user.profile.display_avatar }}" alt="{{ user.get_short_name }}" width="50" height="50" />
+              <img class="rounded-circle object-fit-cover" src="{{ user|get_avatar_url:'50,50' }}" alt="{{ user.get_short_name }}" width="50" height="50" />
               <small class>Xin chào {{ user.get_short_name }}</small>
             </a>
             <div class="dropdown-content" style="width: 300px">

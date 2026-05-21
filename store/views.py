@@ -135,9 +135,10 @@ class ProductCreateView(RoleRequiredMixin, SuccessMessageMixin, CreateView):
 
 class ProductUpdateView(LoginRequiredMixin, SuccessMessageMixin, UpdateView):
     model = Product
-    form_class = ProductUpdateForm  # KHẮC PHỤC: Sử dụng đúng form tùy chỉnh thay vì fields="__all__"
+    form_class = ProductUpdateForm
     slug_field = "slug"
     success_message = "Update product successfully!"
+    template_name = "store/product_update_form.html"
 
     def get_success_url(self):
         return (
@@ -147,14 +148,27 @@ class ProductUpdateView(LoginRequiredMixin, SuccessMessageMixin, UpdateView):
         )
 
     def form_valid(self, form):
+
         response = super().form_valid(form)
+
         images = self.request.FILES.getlist("images")
+
         last_order = ProductImage.objects.filter(product=self.object).count()
+
         for index, img in enumerate(images):
             ProductImage.objects.create(
                 product=self.object, image=img, order=last_order + index
             )
+
         return response
+
+    def form_invalid(self, form):
+
+        print("FORM INVALID")
+        print(form.errors)
+        print(form.non_field_errors())
+
+        return super().form_invalid(form)
 
 
 class ProductDeleteView(RoleRequiredMixin, SuccessMessageMixin, DeleteView):
@@ -354,7 +368,14 @@ class BrandCreateView(SuccessMessageMixin, RoleRequiredMixin, CreateView):
     fields = ["name"]
     success_message = "Đã tạo thương hiệu thành công: %(name)s"
     success_url = reverse_lazy("store:product_create")
-    allowed_roles = ["admin", "staff"]
+    allowed_roles = [
+        "admin",
+    ]
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["title"] = "Create brand"
+        return context
 
 
 # --- HOME VIEW ---

@@ -88,7 +88,7 @@ class Category(MPTTModel):
         ordering = ["display_order", "name"]
 
     def __str__(self):
-        return f"{self.parent.name} > {self.name}" if self.parent else self.name
+        return self.name
 
     def get_absolute_url(self):
         return reverse("store:category_detail", kwargs={"slug": self.slug})

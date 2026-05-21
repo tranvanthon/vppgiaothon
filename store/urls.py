@@ -19,14 +19,14 @@ urlpatterns = [
     # Quản lý Sản phẩm (Products)
     path("", views.HomeView.as_view(), name="home"),
     path("search/", views.search, name="search"),
-    path("products/create/", views.ProductCreateView.as_view(), name="product_create"),
-    path(
-        "product/<slug:slug>/", views.ProductDetailView.as_view(), name="product_detail"
-    ),
     path(
         "product/<slug:slug>/update/",
         views.ProductUpdateView.as_view(),
         name="product_update",
+    ),
+    path("products/create/", views.ProductCreateView.as_view(), name="product_create"),
+    path(
+        "product/<slug:slug>/", views.ProductDetailView.as_view(), name="product_detail"
     ),
     path(
         "product/<slug:slug>/delete/",
