@@ -1,5 +1,6 @@
 {% load static %}
 {% load image_tags %}
+{% load format_filter %}
 <div class="py-2 bg-info text-white text-center small">Chào mừng bạn đến với E-STORE! Miễn phí vận chuyển cho đơn hàng từ 500k.</div>
 
 <nav class="navbar navbar-expand-lg navbar-light bg-white sticky-top">
@@ -12,17 +13,21 @@
       <div class="nav-action-dropdown">
         <a href="#" class="p-2 d-flex align-items-center position-relative text-dark">
           <i class="bi bi-cart3 fs-4"></i>
-          <span class="position-absolute badge rounded-pill bg-danger">{{ item.quantity|default:'0' }}</span>
+          <span class="position-absolute badge rounded-pill bg-danger">{{ cart_items_count }}</span>
         </a>
         <div class="dropdown-content">
-          <h6 class="fw-bold mb-3 small">Giỏ hàng ({{ item.quantity|default:'0' }})</h6>
-          <div class="cart-item-mini">
-            <img src="https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=100" alt="" />
-            <div>
-              <p class="mb-0 fw-bold small">SmartWatch</p>
-              <p class="mb-0 text-primary small">2.450k</p>
+          <h6 class="fw-bold mb-3 small">Giỏ hàng ({{ cart_items_count }})</h6>
+          {% for item in cart_items %}
+            <div class="cart-item-mini">
+              <img src="{{ item.product.main_image_url }}" alt="{{ item.product.name }}" />
+              <div>
+                <p class="mb-0 fw-bold small">{{ item.product.name }}</p>
+                <p class="mb-0 text-primary small">{{ item.quantity }} x {{ item.price|dot_thousands }}đ</p>
+              </div>
             </div>
-          </div>
+          {% empty %}
+            <p class="text-muted small mb-3">Giỏ hàng đang trống.</p>
+          {% endfor %}
           <a href="#" class="btn btn-primary btn-sm w-100">Thanh toán</a>
         </div>
       </div>
@@ -30,7 +35,7 @@
       <div class="nav-action-dropdown">
         {% if request.user.is_authenticated %}
           <a class="me-3 text-primary nav-link" href="#">
-            <img class="rounded-circle object-fit-cover" src="{{ user|get_avatar_url:'50,50' }}" alt="{{ user.get_short_name }}" width="50" height="50" />
+            <img class="rounded-circle object-fit-cover" src="{{ user|get_avatar_url:'50,50' }}?v={{ user.profile.updated_at|date:'U' }}" alt="{{ user.get_short_name }}" width="50" height="50" />
             <small class>Xin chào {{ user.get_short_name }}</small>
           </a>
           <div class="dropdown-content" style="width: 300px">
@@ -116,16 +121,20 @@
         </form>
 
         <div class="nav-action-dropdown">
-          <a href="#" class="text-primary position-relative p-2"><i class="bi bi-cart3 fs-4"></i><span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">2</span></a>
+          <a href="#" class="text-primary position-relative p-2"><i class="bi bi-cart3 fs-4"></i><span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">{{ cart_items_count }}</span></a>
           <div class="dropdown-content">
-            <h6 class="fw-bold mb-3">Giỏ hàng của bạn</h6>
-            <div class="cart-item-mini">
-              <img src="https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=100" alt="" />
-              <div>
-                <p class="mb-0 fw-bold small">SmartWatch Series 9</p>
-                <p class="mb-0 text-primary small">2.450.000đ</p>
+            <h6 class="fw-bold mb-3">Giỏ hàng của bạn ({{ cart_items_count }})</h6>
+            {% for item in cart_items %}
+              <div class="cart-item-mini">
+                <img src="{{ item.product.main_image_url }}" alt="{{ item.product.name }}" />
+                <div>
+                  <p class="mb-0 fw-bold small">{{ item.product.name }}</p>
+                  <p class="mb-0 text-primary small">{{ item.quantity }} x {{ item.price|dot_thousands }}đ</p>
+                </div>
               </div>
-            </div>
+            {% empty %}
+              <p class="text-muted small mb-3">Giỏ hàng đang trống.</p>
+            {% endfor %}
             <div class="d-grid gap-2">
               <a href="#" class="btn btn-primary btn-sm">Thanh toán ngay</a>
             </div>
@@ -135,7 +144,7 @@
         <div class="nav-action-dropdown">
           {% if request.user.is_authenticated %}
             <a class="me-3 text-primary nav-link" href="#">
-              <img class="rounded-circle object-fit-cover" src="{{ user|get_avatar_url:'50,50' }}" alt="{{ user.get_short_name }}" width="50" height="50" />
+              <img class="rounded-circle object-fit-cover" src="{{ user|get_avatar_url:'50,50' }}?v={{ user.profile.updated_at|date:'U' }}" alt="{{ user.get_short_name }}" width="50" height="50" />
               <small class>Xin chào {{ user.get_short_name }}</small>
             </a>
             <div class="dropdown-content" style="width: 300px">
@@ -166,8 +175,8 @@
     </div>
   </div>
   <div class="search-mobile-container d-lg-none" id="searchMobileBox">
-    <form class="d-flex">
-      <input class="form-control me-2" type="search" placeholder="Bạn tìm gì hôm nay?" />
+    <form class="d-flex" method="get" action="{% url 'store:search' %}" role="search">
+      <input class="form-control me-2" type="search" name="query" placeholder="Bạn tìm gì hôm nay?" />
       <button class="btn btn-primary" type="submit">Tìm</button>
     </form>
   </div>

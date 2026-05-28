@@ -4,6 +4,7 @@ from store import views
 app_name = "store"
 
 urlpatterns = [
+    path("cart/add/<slug:slug>/", views.add_to_cart, name="add_to_cart"),
     # Dashboards hệ thống
     path(
         "admin-dashboard/", views.DashboardAdminView.as_view(), name="admin_dashboard"

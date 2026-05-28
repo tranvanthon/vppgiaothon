@@ -1,22 +1,28 @@
 {% extends 'base.html' %}
 
+{% block navbar %}
+  {% include 'partials/navbar.html' %}
+{% endblock %}
+
+{% block hero %}
+
+{% endblock %}
+
 {% block content %}
-  <div class="container mt-4">
-    <h2>Kết quả tìm kiếm cho: "{{ query }}"</h2>
-    <div class="row">
+  <div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+      <h2 class="fw-bold mb-0">Kết quả tìm kiếm cho: "{{ query }}"</h2>
+      <span class="text-muted small">{{ products|length }} sản phẩm</span>
+    </div>
+    <div class="row g-3 g-md-4">
       {% for product in products %}
-        <div class="col-md-3 mb-4">
-          <div class="card h-100">
-            <img src="{{ product.image.url }}" class="card-img-top" alt="{{ product.name }}" />
-            <div class="card-body">
-              <h5 class="card-title">{{ product.name }}</h5>
-              <p class="card-text">{{ product.price|floatformat:0 }} ₫</p>
-              <a href="{% url 'product:product_detail' product.product_slug %}" class="btn btn-primary">Xem chi tiết</a>
-            </div>
-          </div>
+        <div class="col-6 col-md-4 col-lg-3">
+          {% include 'partials/product_cart.html' %}
         </div>
       {% empty %}
-        <p>Không tìm thấy sản phẩm nào.</p>
+        <div class="col-12 text-center py-5">
+          <p class="text-muted mb-0">Không tìm thấy sản phẩm nào phù hợp.</p>
+        </div>
       {% endfor %}
     </div>
   </div>

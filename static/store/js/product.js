@@ -1,3 +1,34 @@
+// Cấu hình các tùy chọn Lightbox2
+if (window.lightbox) {
+  lightbox.option({
+    wrapAround: true,
+    alwaysShowNavOnTouchDevices: true,
+    albumLabel: "Ảnh %1 / %2",
+    fadeDuration: 300,
+    imageFadeDuration: 300,
+  });
+}
+
+// 2. Xử lý sự kiện click "Xem nhanh"
+$(document).ready(function () {
+  $(document).on("click", ".quick-view-btn", function (e) {
+    e.preventDefault();
+    e.stopPropagation(); // Ngăn chặn nổi bọt sự kiện
+
+    // Tìm link ảnh trong đúng card hiện tại và kích hoạt như click trực tiếp vào ảnh.
+    const firstImageLink = $(this)
+      .closest(".product-img-wrapper")
+      .find("a[data-lightbox]")
+      .get(0);
+
+    if (!firstImageLink) {
+      return;
+    }
+
+    firstImageLink.click();
+  });
+});
+
 function previewImages(event) {
   const preview = document.getElementById("preview");
   preview.innerHTML = "";

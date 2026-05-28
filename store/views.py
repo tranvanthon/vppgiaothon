@@ -1,4 +1,5 @@
 from django.contrib import messages
+from django.contrib.auth import get_user_model
 from django.shortcuts import get_object_or_404, redirect, render
 from django.contrib.auth.decorators import login_required
 from django.http import HttpResponseRedirect
@@ -11,17 +12,30 @@ from django.views.generic import (
     View,
 )
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.db.models import Count, Q
+from django.db.models import Count, DecimalField, ExpressionWrapper, F, Q, Sum
 from django.urls import reverse_lazy, reverse
 from django.core.paginator import Paginator
 from django.contrib.messages.views import SuccessMessageMixin
 from django.forms import modelform_factory
+from django.utils import timezone
 from collections import OrderedDict
+import unicodedata
 
-from .models import Product, Banner, Category, Brand, ProductImage
+from .models import Product, Banner, Category, Brand, ProductImage, Order, OrderItem
 from store.forms import ProductUpdateForm, CategoryUpdateForm
 from tools.breadcrumb_utils import get_breadcrumb
 from tools.required_role import RoleRequiredMixin
+from tools.utils import get_or_create_cart
+
+
+# Cart
+def add_to_cart(request, slug):
+    product = get_object_or_404(Product, slug=slug)
+    order = get_or_create_cart(request)
+    # if order is None:
+    #     return redirect("account_login")
+    order.add_product(product, quantity=1)
+    return redirect(request.META.get("HTTP_REFERER", "/"))
 
 
 # --- MIXIN CHUNG CHO DASHBOARD TỐI ƯU CODE ---
@@ -56,22 +70,114 @@ class DashboardAdminView(DashboardBaseView):
     template_name = "core/dashboard_admin.html"
     allowed_roles = ["admin"]
 
+    @staticmethod
+    def _format_vnd(value):
+        return f"{int(value or 0):,}".replace(",", ".") + "đ"
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         CategoryForm = modelform_factory(
             Category, fields=["name", "parent", "image", "icon_code"]
         )
+        today = timezone.localdate()
+        yesterday = today - timezone.timedelta(days=1)
+        revenue_expression = ExpressionWrapper(
+            F("price") * F("quantity"),
+            output_field=DecimalField(max_digits=14, decimal_places=2),
+        )
+        paid_statuses = [Order.Status.PAID, Order.Status.SHIPPED]
+        daily_revenue = (
+            OrderItem.objects.filter(
+                order__complete=True,
+                order__status__in=paid_statuses,
+                order__created_at__date=today,
+            ).aggregate(total=Sum(revenue_expression))["total"]
+            or 0
+        )
+        yesterday_revenue = (
+            OrderItem.objects.filter(
+                order__complete=True,
+                order__status__in=paid_statuses,
+                order__created_at__date=yesterday,
+            ).aggregate(total=Sum(revenue_expression))["total"]
+            or 0
+        )
+        if yesterday_revenue:
+            revenue_change = ((daily_revenue - yesterday_revenue) / yesterday_revenue) * 100
+            revenue_trend_text = f"{revenue_change:+.0f}% so với hôm qua"
+            revenue_trend_icon = (
+                "bi-arrow-up" if revenue_change >= 0 else "bi-arrow-down"
+            )
+        elif daily_revenue:
+            revenue_trend_text = "Có doanh thu mới hôm nay"
+            revenue_trend_icon = "bi-arrow-up"
+        else:
+            revenue_trend_text = "Chưa có doanh thu hôm nay"
+            revenue_trend_icon = "bi-dash-circle"
+
+        User = get_user_model()
         context["category_form"] = CategoryForm()
         context["categories"] = Category.objects.filter(is_active=True)
+        context.update(
+            {
+                "daily_revenue": self._format_vnd(daily_revenue),
+                "revenue_trend_text": revenue_trend_text,
+                "revenue_trend_icon": revenue_trend_icon,
+                "new_orders_today": Order.objects.filter(
+                    complete=True, created_at__date=today
+                ).count(),
+                "pending_orders_count": Order.objects.filter(
+                    complete=True, status=Order.Status.DRAFT
+                ).count(),
+                "customer_count": User.objects.filter(role="customer").count(),
+                "new_customers_today": User.objects.filter(
+                    role="customer", date_joined__date=today
+                ).count(),
+            }
+        )
         return context
 
 
 # --- PRODUCT VIEWS ---
+def normalize_search_text(value):
+    value = unicodedata.normalize("NFD", value or "")
+    value = "".join(char for char in value if unicodedata.category(char) != "Mn")
+    return value.replace("đ", "d").replace("Đ", "D").casefold()
+
+
+def product_matches_search(product, normalized_query):
+    normalized_name = normalize_search_text(product.name)
+    normalized_brand = normalize_search_text(product.brand.name if product.brand else "")
+    normalized_category = normalize_search_text(product.category.name if product.category else "")
+    searchable_text = " ".join([normalized_name, normalized_brand, normalized_category])
+    words = searchable_text.split()
+
+    if normalized_name.startswith(normalized_query):
+        return 0
+    if any(word.startswith(normalized_query) for word in words):
+        return 1
+    if normalized_query in searchable_text:
+        return 2
+    return None
+
+
 def search(request):
-    query = request.GET.get("query", "")
-    products = Product.active.filter(is_sold=False)
+    query = request.GET.get("query", "").strip()
+    products = Product.active.filter(is_sold=False).select_related(
+        "brand", "category"
+    ).prefetch_related("images")
     if query:
-        products = products.filter(Q(name__icontains=query))
+        normalized_query = normalize_search_text(query)
+        matched_products = []
+
+        for product in products:
+            rank = product_matches_search(product, normalized_query)
+            if rank is not None:
+                matched_products.append((rank, product.name.casefold(), product))
+
+        products = [
+            product for _, _, product in sorted(matched_products, key=lambda item: item[:2])
+        ]
     return render(request, "core/search.html", {"products": products, "query": query})
 
 
@@ -80,13 +186,27 @@ class ProductDetailView(DetailView):
     slug_field = "slug"
 
     def get_queryset(self):
-        return Product.objects.select_related("category").prefetch_related("images")
+        return Product.objects.select_related(
+            "category",
+            "brand",
+        ).prefetch_related(
+            "images",
+            "variants",
+        )
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
+
         product = self.object
+        variant_id = self.request.GET.get("variant")
+
+        selected_variant = (
+            product.variants.filter(id=variant_id).first() or product.variants.first()
+        )
+
         context.update(
             {
+                "selected_variant": selected_variant,
                 "related_products": Product.active.filter(
                     category=product.category
                 ).exclude(id=product.id)[:4],
@@ -96,6 +216,7 @@ class ProductDetailView(DetailView):
                 ).prefetch_related("children"),
             }
         )
+
         return context
 
 
@@ -206,10 +327,25 @@ class CategoryUpdateView(LoginRequiredMixin, SuccessMessageMixin, UpdateView):
     model = Category
     form_class = CategoryUpdateForm
     success_message = "Category updated successfully!"
+    template_name = "store/category_update_form.html"
+    slug_field = "slug"
+    slug_url_kwarg = "slug"
 
     def get_success_url(self):
-        # KHẮC PHỤC: Chuyển hướng đúng về trang chi tiết category thay vì category_list bị thiếu tham số slug
-        return reverse("store:category_detail", kwargs={"slug": self.object.slug})
+        return (
+            reverse("store:admin_dashboard")
+            if self.request.user.is_superuser
+            else reverse("store:staff_dashboard")
+        )
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context.update(
+            {
+                "title": "Update category",
+            }
+        )
+        return context
 
 
 class CategoryDetailView(DetailView):

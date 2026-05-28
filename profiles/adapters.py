@@ -56,8 +56,6 @@ class CustomSocialAccountAdapter(DefaultSocialAccountAdapter):
 
     def save_avatar(self, user, url):
         try:
-            from PIL import Image
-            from io import BytesIO
 
             response = requests.get(url)
             if response.status_code != 200:
@@ -75,11 +73,7 @@ class CustomSocialAccountAdapter(DefaultSocialAccountAdapter):
 
             profile = user.profile  # chắc chắn đã tồn tại
 
-            profile.avatar.save(
-                filename,
-                ContentFile(buffer.getvalue()),
-                save=True
-            )
+            profile.avatar.save(filename, ContentFile(buffer.getvalue()), save=True)
 
         except Exception as e:
             print("Error saving avatar:", e)

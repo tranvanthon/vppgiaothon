@@ -1,6 +1,6 @@
 from django.views.generic import UpdateView, DetailView, CreateView
 
-from core.services.image import get_or_create_image_version
+# from core.images.services import get_or_create_image_version
 from .decorators import role_required
 
 from .forms import (
@@ -20,6 +20,7 @@ from django.http import HttpResponse, JsonResponse
 from django.contrib import messages
 from datetime import datetime
 from django.contrib.auth import logout
+from PIL import Image, UnidentifiedImageError
 
 
 @login_required
@@ -83,16 +84,27 @@ def upload_avatar(request):
         
         avatar_file = request.FILES["avatar"]
         
-        # Validate file type
-        if not avatar_file.content_type.startswith('image/'):
+        if not avatar_file.content_type.startswith("image/"):
             return JsonResponse(
                 {"success": False, "message": "File phải là hình ảnh"}, status=400
             )
+
+        if avatar_file.size > 5 * 1024 * 1024:
+            return JsonResponse(
+                {"success": False, "message": "Ảnh tối đa 5MB"}, status=400
+            )
+
+        try:
+            Image.open(avatar_file).verify()
+        except (UnidentifiedImageError, OSError):
+            return JsonResponse(
+                {"success": False, "message": "File ảnh không hợp lệ"}, status=400
+            )
+        finally:
+            avatar_file.seek(0)
         
-        # Get or create profile
         profile, created = Profile.objects.get_or_create(user=request.user)
         
-        # Update avatar - old avatar will be auto-deleted by Profile.save()
         profile.avatar = avatar_file
         profile.save()
 

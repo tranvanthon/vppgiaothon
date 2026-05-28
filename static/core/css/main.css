@@ -89,7 +89,6 @@ button,
     border-color: var(--bs-blue);
 }
 
-
 @keyframes fadeIn {
     from {
         opacity: 0;

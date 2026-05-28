@@ -1,5 +1,5 @@
 from django import template
-from core.services.image import get_or_create_image_version
+from core.images.services import get_or_create_image_version
 from django.core.files.storage import default_storage
 
 register = template.Library()

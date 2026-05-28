@@ -1,7 +1,7 @@
 import os
 import uuid
 
-from datetime import datetime
+from django.utils import timezone
 
 
 def build_upload_path(
@@ -10,7 +10,7 @@ def build_upload_path(
     image_type="original",
 ):
 
-    now = datetime.now()
+    now = timezone.now()
 
     year = now.strftime("%Y")
 
@@ -20,9 +20,10 @@ def build_upload_path(
 
     model_name = instance._meta.model_name
 
-    ext = filename.split(".")[-1].lower()
+    _, ext = os.path.splitext(filename)
+    ext = ext.lower().lstrip(".")   
 
-    unique_name = f"{uuid.uuid4()}.{ext}"
+    unique_name = f"{uuid.uuid4()}.{ext}" if ext else str(uuid.uuid4())
 
     return os.path.join(
         "uploads",

@@ -7,11 +7,10 @@ from django.core.validators import MinValueValidator
 from django.conf import settings
 from mptt.models import MPTTModel, TreeForeignKey
 from PIL import Image
-from tools.get_upload_path import get_upload_path
 from tools.slug import generate_unique_slug
-from core.mixins.image_mixins import ImageMixin
+from core.images.mixins import ImageOptimizationsMixin
 
-from core.paths.upload import (
+from core.images.paths import (
     original_upload_path,
     thumb_upload_path,
     medium_upload_path,
@@ -36,12 +35,12 @@ class Brand(models.Model):
         return self.name
 
 
-class Banner(models.Model):
+class Banner(ImageOptimizationsMixin, models.Model):
     name = models.CharField(max_length=255)
     link = models.URLField(blank=True)
     order = models.IntegerField(blank=True, default=0)
     decristion_short = models.CharField(max_length=255, blank=True)
-    image = models.ImageField(upload_to=get_upload_path)
+    image = models.ImageField(upload_to=original_upload_path)
     is_active = models.BooleanField(default=True, db_default=True)
 
     def __str__(self):
@@ -59,14 +58,14 @@ class Banner(models.Model):
                 pass
 
 
-class Category(MPTTModel):
+class Category(ImageOptimizationsMixin, MPTTModel):
     name = models.CharField(max_length=255)
     parent = TreeForeignKey(
         "self", on_delete=models.CASCADE, null=True, blank=True, related_name="children"
     )
     slug = models.SlugField(unique=True, blank=True)
     icon_code = models.CharField(max_length=150, blank=True)
-    image = models.ImageField(upload_to=get_upload_path, blank=True)
+    image = models.ImageField(upload_to=original_upload_path, blank=True, null=True)
     is_active = models.BooleanField(default=True, db_default=True)
     is_featured = models.BooleanField(default=False)
     display_order = models.IntegerField(default=0)
@@ -103,14 +102,6 @@ class Category(MPTTModel):
         if not self.slug:
             self.slug = generate_unique_slug(self, self.name, "slug")
         super().save(*args, **kwargs)
-        if self.image:
-            try:
-                img = Image.open(self.image.path)
-                if img.width > 32 or img.height > 32:
-                    img.thumbnail((32, 32))
-                    img.save(self.image.path, optimize=True, quality=70)
-            except FileNotFoundError:
-                pass
 
     def get_products_queryset(
         self, brand=None, min_price=None, max_price=None, sort=None, is_active=True
@@ -186,10 +177,6 @@ class Category(MPTTModel):
 
 
 class Product(models.Model):
-    class ColorChoice(models.TextChoices):
-        BLACK = "BLACK", "Black"
-        GOLD = "GOLD", "Gold"
-        RED = "RED", "Red"
 
     name = models.CharField(max_length=255)
     category = models.ForeignKey(
@@ -223,9 +210,6 @@ class Product(models.Model):
         related_name="products",
         blank=True,
         null=True,
-    )
-    color = models.CharField(
-        max_length=20, choices=ColorChoice.choices, default=ColorChoice.BLACK
     )
 
     meta_title = models.CharField(max_length=200, blank=True)
@@ -270,41 +254,61 @@ class Product(models.Model):
     def is_in_stock(self):
         return self.stock > 0 if self.track_stock else True
 
-
-class Order(models.Model):
-    class Status(models.TextChoices):
-        DRAFT = "DRAFT", "Draft"
-        PAID = "PAID", "Paid"
-        SHIPPED = "SHIPPED", "Shipped"
-        CANCELLED = "CANCELLED", "Cancelled"
-
-    status = models.CharField(
-        max_length=20, choices=Status.choices, default=Status.DRAFT
-    )
-    customer = models.ForeignKey(
-        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="orders"
-    )
-    complete = models.BooleanField(default=False)
-    created_at = models.DateTimeField(auto_now_add=True)
-
-    class Meta:
-        ordering = ["-created_at"]
-
-
-class OrderItem(models.Model):
-    order = models.ForeignKey(Order, on_delete=models.CASCADE, related_name="items")
-    product = models.ForeignKey(
-        Product, on_delete=models.PROTECT, related_name="order_items"
-    )
-    price = models.DecimalField(max_digits=10, decimal_places=2)
-    quantity = models.PositiveIntegerField(default=1, validators=[MinValueValidator(1)])
+    @property
+    def main_image(self):
+        return self.images.filter(is_main=True).first() or self.images.first()
 
     @property
-    def subtotal(self):
-        return self.price * self.quantity
+    def main_image_url(self):
+        image = self.main_image
+
+        if image:
+            return image.medium_url
+
+        return "/static/images/default/default.png"
+
+    @property
+    def main_image_original_url(self):
+        image = self.main_image
+
+        if image:
+            return image.original_url
+
+        return "/static/images/default/default.png"
 
 
-class ProductImage(ImageMixin, models.Model):
+class ProductVariant(models.Model):
+
+    class ColorChoice(models.TextChoices):
+        BLACK = "BLACK", "Black"
+        GOLD = "GOLD", "Gold"
+        RED = "RED", "Red"
+
+    product = models.ForeignKey(
+        Product,
+        on_delete=models.CASCADE,
+        related_name="variants",
+    )
+
+    color = models.CharField(
+        max_length=20,
+        choices=ColorChoice.choices,
+    )
+
+    price = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+    )
+
+    stock = models.PositiveIntegerField(default=0)
+
+    sku = models.CharField(
+        max_length=100,
+        unique=True,
+    )
+
+
+class ProductImage(ImageOptimizationsMixin, models.Model):
     product = models.ForeignKey(
         Product, on_delete=models.CASCADE, related_name="images"
     )
@@ -335,8 +339,22 @@ class ProductImage(ImageMixin, models.Model):
         ]
 
     @property
-    def imageURL(self):
-        return self.image.url if self.image else "/static/images/default/default.png"
+    def original_url(self):
+        if self.image:
+            return self.image.url
+        return "/static/images/default/default.png"
+
+    @property
+    def thumb_url(self):
+        if self.thumbnail:
+            return self.thumbnail.url
+        return self.original_url
+
+    @property
+    def medium_url(self):
+        if self.medium:
+            return self.medium.url
+        return self.original_url
 
     def save(self, *args, **kwargs):
         if self.is_main:
@@ -345,10 +363,56 @@ class ProductImage(ImageMixin, models.Model):
             ).update(is_main=False)
 
         super().save(*args, **kwargs)
-        try:
-            img = Image.open(self.image.path)
-            if img.width > 800 or img.height > 800:
-                img.thumbnail((800, 800))
-                img.save(self.image.path, optimize=True, quality=70)
-        except FileNotFoundError:
-            pass
+
+
+class Order(models.Model):
+    class Status(models.TextChoices):
+        DRAFT = "DRAFT", "Draft"
+        PAID = "PAID", "Paid"
+        SHIPPED = "SHIPPED", "Shipped"
+        CANCELLED = "CANCELLED", "Cancelled"
+
+    status = models.CharField(
+        max_length=20, choices=Status.choices, default=Status.DRAFT
+    )
+    customer = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="orders",
+        null=True,
+        blank=True,
+    )
+    complete = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+
+    def add_product(self, product, quantity=1):
+        item, created = self.items.get_or_create(
+            product=product,
+            defaults={
+                "price": product.price_sale,
+                "quantity": quantity,
+            },
+        )
+
+        if not created:
+            item.quantity += quantity
+            item.price = product.price_sale
+            item.save(update_fields=["quantity", "price"])
+
+        return item
+
+
+class OrderItem(models.Model):
+    order = models.ForeignKey(Order, on_delete=models.CASCADE, related_name="items")
+    product = models.ForeignKey(
+        Product, on_delete=models.PROTECT, related_name="order_items"
+    )
+    price = models.DecimalField(max_digits=10, decimal_places=2)
+    quantity = models.PositiveIntegerField(default=1, validators=[MinValueValidator(1)])
+
+    @property
+    def subtotal(self):
+        return self.price * self.quantity

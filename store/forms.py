@@ -74,7 +74,6 @@ class ProductUpdateForm(BootstrapModelForm):
             "discount_percent",
             "cost_price",
             "stock",
-            "color",
             "meta_title",
             "meta_description",
             "meta_keywords",

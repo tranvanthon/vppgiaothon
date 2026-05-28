@@ -129,7 +129,7 @@
                 <!-- Products Grid -->
                 <div class="row g-4">
                         {% for product in products %}
-                            {% include 'partials/product_list.html' with product=product %}
+                            {% include 'partials/product_cart.html' with product=product %}
                         {% empty %}
                             <div class="col-12 text-center py-5">
                                 <i class="bi bi-search fs-1 text-muted"></i>

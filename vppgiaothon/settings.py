@@ -81,6 +81,7 @@ TEMPLATES = [
                 "django.contrib.messages.context_processors.messages",
                 # Cho hiển thị categories mọi nơi trong project
                 "vppgiaothon.context_processors.global_categories",
+                "vppgiaothon.context_processors.cart_summary",
                 # Lây ten domail
                 "vppgiaothon.context_processors.site_info",
             ],

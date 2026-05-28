@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% load static %}
 {% block content %}
   <div class="sidebar shadow-sm">
     <div class="p-4 mb-3">
@@ -50,22 +51,22 @@
         <div class="col-md-4">
           <div class="card p-4 bg-primary text-white">
             <h6>Doanh thu ngày</h6>
-            <h2 class="fw-bold">12.500.000đ</h2>
-            <small><i class="bi bi-arrow-up"></i> +15% so với hôm qua</small>
+            <h2 class="fw-bold">{{ daily_revenue }}</h2>
+            <small><i class="bi {{ revenue_trend_icon }}"></i> {{ revenue_trend_text }}</small>
           </div>
         </div>
         <div class="col-md-4">
           <div class="card p-4 bg-white">
             <h6>Đơn hàng mới</h6>
-            <h2 class="fw-bold text-dark">48</h2>
-            <small class="text-success"><i class="bi bi-check-circle"></i> 5 đơn đang chờ</small>
+            <h2 class="fw-bold text-dark">{{ new_orders_today }}</h2>
+            <small class="text-success"><i class="bi bi-check-circle"></i> {{ pending_orders_count }} đơn đang chờ</small>
           </div>
         </div>
         <div class="col-md-4">
           <div class="card p-4 bg-white">
-            <h6>Lượt truy cập</h6>
-            <h2 class="fw-bold text-dark">1,204</h2>
-            <small class="text-muted">Tính trong 24h qua</small>
+            <h6>Khách hàng</h6>
+            <h2 class="fw-bold text-dark">{{ customer_count }}</h2>
+            <small class="text-muted">{{ new_customers_today }} khách hàng mới hôm nay</small>
           </div>
         </div>
       </div>
@@ -84,7 +85,13 @@
         {% for product in products %}
           <div class="col-md-3">
             <div class="card p-3 h-100">
-              <img src="{{ product.images.all.0.image.url }}" class="product-img mb-3" alt="{{ product.name }}" style="object-fit: cover; height: 180px;" />
+              {% with product.images.all|first as product_image %}
+                {% if product_image %}
+                  <img src="{{ product_image.image.url }}" class="product-img mb-3" alt="{{ product.name }}" style="object-fit: cover; height: 180px;" />
+                {% else %}
+                  <img src="{% static 'images/default/default.png' %}" class="product-img mb-3" alt="{{ product.name }}" style="object-fit: cover; height: 180px;" />
+                {% endif %}
+              {% endwith %}
               <h6 class="fw-bold text-truncate">{{ product.name }}</h6>
               <p class="text-muted small">
                 {{ product.category.name }} •{% if product.track_stock %}
@@ -240,8 +247,12 @@
       <div class="row g-4">
         <div class="col-md-12">
           <div class="card h-100">
-            <div class="card-header bg-white p-3 border-0">
+            <div class="card-header bg-white p-3 border-0 d-flex justify-content-between align-items-center">
               <h6 class="fw-bold mb-0">Danh mục hiện có</h6>
+              <div>
+                <a href="{% url 'store:category_create' %}" class="btn btn-outline-info border-0 rounded-3 p-2 px-4" title="Thêm danh mục"><i class="bi bi-folder-plus fs-3"></i></a>
+                <a href="{% url 'store:category_trash' %}" class="btn btn-outline-danger border-0 rounded-3 p-2 px-4" title="Xem danh mục đã xóa"><i class="bi bi-trash3 fs-3"></i></a>
+              </div>
             </div>
             <div class="table-responsive p-3">
               <table class="table table-borderless align-middle">
@@ -259,7 +270,7 @@
                     <tr>
                       <td>
                         {% if category.image %}
-                          <img src="{{ category.image.url }}" class="rounded" style="width: 35px; height: 35px; object-fit: cover;" />
+                          <img src="{{ category.imageURL }}" class="rounded" style="width: 35px; height: 35px; object-fit: cover;" />
                         {% else %}
                           <div class="icon-box bg-primary-subtle text-primary d-flex align-items-center justify-content-center fw-bold rounded" style="width: 35px; height: 35px">
                             <i class="{{ category.icon_code|default:'📁' }}"></i>
@@ -282,17 +293,21 @@
                         {% endif %}
                       </td>
                       <td>
-                        <a href="{% url 'store:category_create' %}" class="btn btn-sm btn-outline-primary border-0"><i class="bi bi-folder-plus text-info"></i></a>
                         <a href="{% url 'store:category_update' category.slug %}" class="btn btn-sm btn-outline-info border-0"><i class="bi bi-pencil text-primary"></i></a>
                         <form action="{% url 'store:category_delete' category.slug %}" method="POST" class="d-inline" onsubmit="return confirm('Bạn có chắc chắn muốn xóa danh mục {{ category.name }}?');">
                           {% csrf_token %}
-                          <button type="submit" class="btn btn-sm btn-outline-danger border-0"><i class="bi bi-trash"></i></button>
+                          <button type="submit" class="btn btn-sm btn-outline-danger border-0" title="Xóa danh mục"><i class="bi bi-folder-x"></i></button>
                         </form>
                       </td>
                     </tr>
                   {% empty %}
                     <tr>
-                      <td colspan="4" class="text-center text-muted py-3">Chưa có danh mục nào.</td>
+                      <td colspan="5" class="text-center py-5">
+                        <div class="alert alert-warning text-center py-5" role="alert">
+                          <i class="bi bi-exclamation-triangle-fill fs-1"></i>
+                          <p class="mb-0">Hiện tại chưa có danh mục sản phẩm nào.</p>
+                        </div>
+                      </td>
                     </tr>
                   {% endfor %}
                 </tbody>

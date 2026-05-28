@@ -1,102 +1,120 @@
-{% extends 'base.html' %}
-
-{% block title %}
-  Trang chủ
-{% endblock %}
-
-{% block navbar %}
+{% extends 'base.html' %} {% load static %} {% block title %}
+  Trang chủ - Văn phòng phẩm {{ sitename }}
+{% endblock %} {% block navbar %}
   {% include 'partials/navbar.html' %}
 {% endblock %}
+
+{% block hero %}
+  {% include 'partials/hero.html' %}
+{% endblock %}
+
 {% block content %}
-  <div class="container py-4">
-    <section class="py-5">
+  <div class="storefront-page">
+    <section class="store-section featured-categories">
       <div class="container">
-        <h3 class="fw-bold mb-4 text-center">Danh mục nổi bật</h3>
-        <div class="row g-3">
+        <div class="section-heading section-heading-center">
+          <span class="section-kicker">Khám phá nhanh</span>
+          <h3>Danh mục nổi bật</h3>
+        </div>
+        <div class="row g-3 g-md-4">
           {% for category in featured_categories %}
             <div class="col-6 col-md-3">
-              <a href="{{ category.get_absolute_url }}" class="cat-item shadow-sm">
-                {% if category.image %}
-                  <img src="{{ category.imageURL }}" alt="{{ category.name }}" />
-                {% elif category.icon_code %}
-                  <i class="{{ category.icon_code }} fs-2"></i>
-                {% else %}
-                  <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                    <p class="text-primary">Bạn chưa upload ảnh hoặc icon bootstrap</p>
-                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                  </div>
-                {% endif %}
-
-                <br /><b>{{ category.name }}</b>
+              <a href="{% url 'store:category_detail' category.slug %}" class="cat-item">
+                <span class="cat-icon">
+                  {% if category.icon_code %}
+                    <i class="{{ category.icon_code }}"></i>
+                  {% else %}
+                    <i class="bi bi-grid"></i>
+                  {% endif %}
+                </span>
+                <span>{{ category.name }}</span>
               </a>
             </div>
           {% endfor %}
         </div>
       </div>
     </section>
-    <!-- 3. SECTION: BEST SELLERS (SẢN PHẨM BÁN CHẠY) -->
-    <section class="py-5">
-      <div class="d-flex justify-content-between align-items-center mb-4">
-        <h3 class="fw-bold m-0"><i class="bi bi-fire text-danger me-2"></i>Bán chạy nhất</h3>
-        <a href="#" class="text-decoration-none">Xem tất cả</a>
-      </div>
-      <div class="row g-4">
-        {% for product in best_sellers %}
-          {% include 'partials/product_list.html' %}
-        {% endfor %}
-      </div>
-    </section>
-    <!-- 4. SECTION: LATEST PRODUCTS (SẢN PHẨM MỚI) -->
-    <section class="py-5 bg-light rounded-4 px-3">
-      <div class="d-flex justify-content-between align-items-center mb-4">
-        <h3 class="fw-bold m-0"><i class="bi bi-sparkles text-warning me-2"></i>Hàng mới về</h3>
-        <a href="#" class="text-decoration-none">Khám phá ngay</a>
-      </div>
-      <div class="row g-4">
-        {% for product in latest_products %}
-          {% include 'partials/product_list.html' %}
-        {% endfor %}
+
+    <section class="store-section">
+      <div class="container">
+        <div class="section-heading">
+          <div>
+            <span class="section-kicker">Được chọn nhiều</span>
+            <h3><i class="bi bi-fire text-danger me-2"></i>Bán chạy nhất</h3>
+          </div>
+          <a href="#" class="section-link">Xem tất cả <i class="bi bi-arrow-right"></i></a>
+        </div>
+        <div class="row g-3 g-md-4">
+          {% for product in best_sellers %}
+            <div class="col-6 col-md-4 col-lg-3">
+              {% include 'partials/product_cart.html' %}
+            </div>
+          {% endfor %}
+        </div>
       </div>
     </section>
+
+    <section class="store-section soft-section">
+      <div class="container">
+        <div class="section-heading">
+          <div>
+            <span class="section-kicker">Vừa cập nhật</span>
+            <h3><i class="bi bi-sparkles text-warning me-2"></i>Hàng mới về</h3>
+          </div>
+          <a href="#" class="section-link">Khám phá ngay <i class="bi bi-arrow-right"></i></a>
+        </div>
+        <div class="row g-3 g-md-4">
+          {% for product in latest_products %}
+            <div class="col-6 col-md-4 col-lg-3">
+              {% include 'partials/product_cart.html' %}
+            </div>
+          {% endfor %}
+        </div>
+      </div>
+    </section>
+
     {% comment %}San pham theo danh muc{% endcomment %}
-    <section>
-      <div class="product_list">
-        {% for category_group in grouped_categories %}
-          <section class="py-5 bg-light">
-            <div class="container">
-              <!-- MAIN CATEGORY -->
-              <div class="d-flex justify-content-between align-items-center pb-2 mb-4">
-                <h1 class="h3 fw-bold text-danger m-0">{{ category_group.main_category.name }}</h1>
+    <section class="store-section category-products">
+      {% for category_group in grouped_categories %}
+        <div class="category-band">
+          <div class="container">
+            <div class="section-heading">
+              <div>
+                <span class="section-kicker">Theo danh mục</span>
+                <h3>{{ category_group.main_category.name }}</h3>
               </div>
+            </div>
 
-              {% for group in category_group.groups %}
-                <!-- SUB CATEGORY -->
-                <div class="d-flex justify-content-between align-items-center mb-3">
-                  <h2 class="h5 fw-semibold text-secondary">{{ group.category.name }}</h2>
-
-                  <a href="{% url 'store:category_detail' group.category.slug %}" class="small text-decoration-none">Xem tất cả →</a>
+            {% for group in category_group.groups %}
+              <div class="category-group">
+                <div class="category-group-heading">
+                  <h4>{{ group.category.name }}</h4>
+                  <a href="{% url 'store:category_detail' group.category.slug %}" class="section-link">Xem tất cả <i class="bi bi-arrow-right"></i></a>
                 </div>
 
-                <!-- PRODUCTS -->
-                <div class="row g-4 mb-5">
+                <div class="row g-3 g-md-4">
                   {% for product in group.products %}
-                    {% include 'partials/product_list.html' %}
+                    <div class="col-6 col-md-4 col-lg-3">
+                      {% include 'partials/product_cart.html' %}
+                    </div>
                   {% empty %}
                     <div class="col-12 text-center py-5">
-                      <p class="text-muted">Không tìm thấy sản phẩm nào phù hợp.</p>
+                      <p class="text-muted mb-0">Không tìm thấy sản phẩm nào phù hợp.</p>
                     </div>
                   {% endfor %}
                 </div>
-              {% endfor %}
-            </div>
-          </section>
-        {% empty %}
+              </div>
+            {% endfor %}
+          </div>
+        </div>
+      {% empty %}
+        <div class="container">
           <div class="alert alert-warning text-center py-5" role="alert">
             <i class="bi bi-exclamation-triangle-fill fs-1"></i>
             <p class="mb-0">Hiện tại chưa có danh mục sản phẩm nào.</p>
           </div>
-        {% endfor %}
-      </div>
+        </div>
+      {% endfor %}
     </section>
   </div>
 {% endblock %}

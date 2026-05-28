@@ -8,8 +8,10 @@ from django.contrib.auth.models import (
     PermissionsMixin,
     BaseUserManager,
 )
-from core.paths.upload import original_upload_path
+from core.images.utils import delete_image_versions
+from core.images.paths import original_upload_path
 from django.utils import timezone
+from core.images.mixins import ImageOptimizationsMixin
 
 
 class CustomUserManager(BaseUserManager):
@@ -90,7 +92,9 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
         return self.role == "staff"
 
 
-class Profile(models.Model):
+class Profile(ImageOptimizationsMixin, models.Model):
+    image_field_name = "avatar"
+
     SEX_CHOICES = [
         ("M", "Nam"),
         ("F", "Nữ"),
@@ -106,58 +110,6 @@ class Profile(models.Model):
     sex = models.CharField(max_length=1, choices=SEX_CHOICES, default="M")
     bio = models.TextField(null=True, blank=True)
     updated_at = models.DateTimeField(auto_now=True)
-
-    def save(self, *args, **kwargs):
-        # 1. Kiểm tra nếu user THAY ĐỔI hoặc XÓA avatar
-        if self.pk:
-            old_instance = type(self).objects.filter(pk=self.pk).first()
-            if (
-                old_instance
-                and old_instance.avatar
-                and old_instance.avatar != self.avatar
-            ):
-                old_avatar_name = old_instance.avatar.name
-
-                # A. Xóa file ảnh gốc
-                try:
-                    if default_storage.exists(old_avatar_name):
-                        default_storage.delete(old_avatar_name)
-                except Exception as e:
-                    print(f"Lỗi khi xóa ảnh gốc: {e}")
-
-                # B. Quét và xóa TẤT CẢ các bản sao lưu, bản resize liên quan đến file cũ
-                try:
-                    filename = os.path.basename(old_avatar_name)
-                    app_name = self._meta.app_label
-                    model_name = self._meta.model_name
-                    base_dir_relative = os.path.join("uploads", app_name, model_name)
-                    base_dir_absolute = default_storage.path(base_dir_relative)
-
-                    search_pattern = os.path.join(base_dir_absolute, "**", filename)
-                    found_files = glob.glob(search_pattern, recursive=True)
-
-                    for file_path in found_files:
-                        try:
-                            if os.path.exists(file_path):
-                                os.remove(file_path)
-                        except Exception as e:
-                            print(f"Lỗi khi xóa file: {file_path} - {e}")
-
-                except Exception as e:
-                    print(f"Lỗi khi quét dọn ảnh cache resize: {e}")
-
-        # 2. Thực hiện lưu model
-        super().save(*args, **kwargs)
-
-        # 3. Tối ưu ảnh gốc (resize nếu quá lớn)
-        if self.avatar and default_storage.exists(self.avatar.name):
-            try:
-                img = Image.open(self.avatar.path)
-                if img.width > 1200 or img.height > 1200:
-                    img.thumbnail((1200, 1200), Image.Resampling.LANCZOS)
-                img.save(self.avatar.path, optimize=True, quality=85)
-            except Exception as e:
-                print(f"Lỗi xử lý tối ưu ảnh gốc: {e}")
 
     @property
     def display_avatar(self):

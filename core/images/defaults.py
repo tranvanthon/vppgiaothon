@@ -1,0 +1,12 @@
+# Placeholder images
+DEFAULT_AVATAR = "defaults/avatar.png"
+DEFAULT_PRODUCT_IMAGE = "defaults/product.png"
+DEFAULT_CATEGORY_IMAGE = "defaults/category.png"
+
+DEFAULT_IMAGE_FORMAT = "WEBP"
+
+DEFAULT_WEBP_QUALITY = 80
+
+DEFAULT_MAX_IMAGE_SIZE = (1200, 1200)
+
+DEFAULT_BACKGROUND_COLOR = (255, 255, 255)

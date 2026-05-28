@@ -1,0 +1,49 @@
+{% load format_filter %}
+
+<div class="product-card">
+  <div class="product-img-wrapper">
+    <a href="{{ product.main_image_original_url }}" data-lightbox="product-{{ product.pk }}" data-title="{{ product.name }}">
+      <img src="{{ product.main_image_url }}" class="product-main-img" alt="{{ product.name }}" />
+    </a>
+
+    {% for image in product.images.all %}
+      {% if image != product.main_image %}
+        <a href="{{ image.original_url }}" data-lightbox="product-{{ product.pk }}" data-title="{{ product.name }}"></a>
+      {% endif %}
+    {% endfor %}
+
+    <button class="btn-wishlist" type="button" aria-label="Yêu thích {{ product.name }}">
+      <i class="bi bi-heart"></i>
+    </button>
+    <div class="quick-view-btn">
+      <i class="bi bi-eye me-1"></i> Xem nhanh
+    </div>
+  </div>
+
+  <div class="p-3">
+    <a href="{% url 'store:product_detail' product.slug %}" class="text-dark text-decoration-none">
+      <h6 class="fw-bold mb-1 text-truncate">{{ product.name }}</h6>
+    </a>
+    <div class="text-warning small mb-2">
+      <i class="bi bi-star-fill"></i> 4.9
+      {% if product.brand %}
+        <span class="text-muted">({{ product.brand.name }})</span>
+      {% else %}
+        <span class="text-muted">(Đã bán {{ product.sold_count|default:'0' }})</span>
+      {% endif %}
+    </div>
+    <div class="d-flex justify-content-between align-items-center gap-2">
+      <div>
+        <span class="fw-bold text-primary">{{ product.price_sale|dot_thousands }}đ</span>
+        {% if product.discount_percent %}
+          <small class="text-muted text-decoration-line-through d-block">{{ product.price|dot_thousands }}đ</small>
+        {% endif %}
+      </div>
+      {% if product.is_in_stock %}
+        <a href="{% url 'store:add_to_cart' product.slug %}" class="btn btn-sm btn-primary rounded-pill px-3">Mua</a>
+      {% else %}
+        <button class="btn btn-sm btn-outline-secondary rounded-pill px-3" type="button" disabled>Hết</button>
+      {% endif %}
+    </div>
+  </div>
+</div>
