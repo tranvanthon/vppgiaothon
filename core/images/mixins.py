@@ -1,7 +1,4 @@
-from django.db import models
-
 from core.images.processors import process_image
-from core.images.services import get_or_create_image_version
 from core.images.state import image_changed
 from core.images.storage import cleanup_image_files
 

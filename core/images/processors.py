@@ -1,5 +1,3 @@
-# core/images/processors.py
-
 from pathlib import Path
 
 from PIL import Image

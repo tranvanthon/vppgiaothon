@@ -25,36 +25,109 @@
     transform: translateY(0);
 }
 
-
 .navbar {
     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
     padding: 15px 0;
 }
-
-
 
 /* Dropdown Action (Cart, Account) */
 .nav-action-dropdown {
     position: relative;
 }
 
+/* Dropdown chung - ĐÃ SỬA */
 .dropdown-content {
     position: absolute;
     top: 100%;
     right: 0;
-    width: 300px;
-    background: #fff;
-    box-shadow: 0 15px 30px rgba(0, 0, 0, 0.1);
+    background: white;
     border-radius: 12px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
     padding: 20px;
     z-index: 1000;
-    visibility: hidden;
+    min-width: 320px;
+    max-width: 450px;
+    width: auto;
+    max-height: 500px;
+    overflow-y: auto;
+    overflow-x: hidden;
     opacity: 0;
-    transform: translateY(15px);
-    transition: all 0.3s ease;
+    visibility: hidden;
+    transition: all 0.2s ease;
 }
 
-/* Style cho các item trong Mega Menu */
+/* Dropdown giỏ hàng - ưu tiên rộng hơn */
+.nav-action-dropdown .dropdown-content {
+    min-width: 360px;
+    max-width: 480px;
+}
+
+/* Dropdown account */
+.nav-action-dropdown .dropdown-content[style*="width: 300px"] {
+    min-width: 280px;
+    max-width: 320px;
+}
+
+.nav-action-dropdown:hover .dropdown-content {
+    visibility: visible;
+    opacity: 1;
+    transform: translateY(10px);
+}
+
+/* Cart Item Styles - ĐÃ SỬA */
+.cart-item-mini {
+    display: flex;
+    gap: 12px;
+    padding: 12px 0;
+    border-bottom: 1px solid #eee;
+    margin-bottom: 12px;
+}
+
+.cart-item-mini:last-child {
+    border-bottom: none;
+    margin-bottom: 0;
+    padding-bottom: 0;
+}
+
+.cart-item-mini img {
+    width: 60px;
+    height: 60px;
+    object-fit: cover;
+    border-radius: 8px;
+    flex-shrink: 0;
+}
+
+.cart-item-mini>div {
+    flex: 1;
+    min-width: 0;
+}
+
+.cart-item-mini .fw-bold.small {
+    white-space: normal;
+    word-break: break-word;
+}
+
+.cart-item-mini .text-primary.small {
+    white-space: nowrap;
+}
+
+/* Account Link Styles */
+.account-link {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px;
+    color: var(--bs-blue);
+    text-decoration: none;
+    border-radius: 8px;
+    transition: background 0.2s;
+}
+
+.account-link:hover {
+    background-color: rgba(var(--bs-primary-rgb), 0.05);
+}
+
+/* Mega Menu Items */
 .mega-menu-item {
     text-decoration: none;
     color: var(--bs-blue);
@@ -88,46 +161,12 @@
     font-size: 0.95rem;
 }
 
-.nav-action-dropdown:hover .dropdown-content {
-    visibility: visible;
-    opacity: 1;
-    transform: translateY(10px);
-}
-
-/* Cart Mini Style */
-.cart-item-mini {
-    display: flex;
-    gap: 12px;
-    padding-bottom: 12px;
-    margin-bottom: 12px;
-    border-bottom: 1px solid var(--bs-secondary);
-}
-
-.cart-item-mini img {
-    width: 50px;
-    height: 50px;
-    object-fit: cover;
-    border-radius: 8px;
-}
-
-.account-link {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    padding: 8px;
-    color: var(--bs-blue);
-    text-decoration: none;
-    border-radius: 8px;
-}
-
-/* Hero & Sections  */
+/* Hero & Sections */
 .hero-wrapper {
     margin-bottom: 2rem;
-    /* Tạo khoảng cách an toàn với phần danh mục */
 }
 
 .hero-slider-container {
-    height: 450px;
     height: auto;
 }
 
@@ -192,14 +231,11 @@
     color: #fff;
 }
 
-/* category and product */
-
-/* Layout cho trang Category */
+/* Category & Product Layout */
 .category-container {
     padding: 40px 0;
 }
 
-/* Sidebar lọc sản phẩm */
 .filter-sidebar {
     background: #fff;
     border-radius: 15px;
@@ -223,13 +259,11 @@
     color: var(--bs-blue);
 }
 
-/* Tùy chỉnh các checkbox màu Primary */
 .form-check-input:checked {
     background-color: var(--bs-primary);
     border-color: var(--bs-primary);
 }
 
-/* Sắp xếp & Hiển thị */
 .sort-bar {
     background: #fff;
     border-radius: 12px;
@@ -237,61 +271,25 @@
     margin-bottom: 25px;
 }
 
-/* endcarousel */
-/* Layout cho trang Category */
-.category-container {
-    padding: 40px 0;
-}
-
-/* Sidebar lọc sản phẩm */
-.filter-sidebar {
-    background: #fff;
-    border-radius: 15px;
-    padding: 20px;
-}
-
-.filter-group {
-    border-bottom: 1px solid var(--bs-secondary);
-    padding-bottom: 15px;
-    margin-bottom: 15px;
-}
-
-.filter-group:last-child {
-    border-bottom: none;
-}
-
-.filter-title {
-    font-weight: 700;
-    font-size: 1rem;
-    margin-bottom: 15px;
-    color: var(--bs-blue);
-}
-
-/* Tùy chỉnh các checkbox màu Primary */
-.form-check-input:checked {
-    background-color: var(--bs-primary);
-    border-color: var(--bs-primary);
-}
-
-/* Sắp xếp & Hiển thị */
-.sort-bar {
-    background: #fff;
-    border-radius: 12px;
-    padding: 15px 20px;
-    margin-bottom: 25px;
-}
-
-/* Đảm bảo Carousel và Promo Banners có độ cao bằng nhau */
 .hero-wrapper .row {
     min-height: 400px;
     height: auto;
 }
 
+/* Đảm bảo navbar không bị tràn */
+.navbar .container,
+.navbar .container-fluid {
+    overflow: visible !important;
+}
+
+.navbar-collapse {
+    overflow: visible !important;
+}
 
 /* Mobile Optimization */
 @media (max-width: 991.98px) {
 
-    /* Tắt Hover */
+    /* Tắt Hover trên mobile */
     .nav-item.dropdown-mega:hover .mega-menu,
     .nav-action-dropdown:hover .dropdown-content {
         visibility: hidden;
@@ -299,7 +297,7 @@
         transform: none;
     }
 
-    /* Show Dropdown khi click trên Mobile */
+    /* Show Dropdown khi click trên Mobile - cần JS để toggle class 'show' */
     .mega-menu.show,
     .dropdown-content.show {
         visibility: visible !important;
@@ -311,11 +309,10 @@
     }
 
     .dropdown-content.show {
-        width: 280px !important;
-        right: -50px;
+        min-width: 280px !important;
+        max-width: 320px !important;
+        right: -20px;
     }
-
-    /* Căn chỉnh để không tràn màn hình */
 
     /* Search Mobile */
     .search-mobile-container {
@@ -339,10 +336,9 @@
         opacity: 1 !important;
         transform: translateY(0) !important;
         position: relative;
-        /* Trên mobile nên để relative để đẩy nội dung, hoặc absolute nếu bạn muốn nó đè lên */
     }
 
-    /* Badge giỏ hàng */
+    /* Badge giỏ hàng trên mobile */
     .nav-action-dropdown .badge {
         top: 5px !important;
         right: 0px !important;
@@ -354,12 +350,10 @@
         display: none;
     }
 
-    /* Cho sản phẩm hiển thị sát lên trên hơn */
     .category-container {
         padding-top: 20px;
     }
 
-    /* Chỉnh lại nút Sort Bar trên mobile cho gọn */
     .sort-bar {
         padding: 10px;
         flex-direction: column;

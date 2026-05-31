@@ -1,0 +1,625 @@
+{% extends 'base.html' %}
+{% load format_filter %}
+
+{% block content %}
+<style>
+/* Checkout Styles */
+.checkout-container {
+    padding: 40px 0;
+    background-color: #f8f9fa;
+    min-height: calc(100vh - 200px);
+}
+.step-title {
+    font-weight: 700;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+.payment-method-card {
+    border: 1px solid #dee2e6;
+    border-radius: 10px;
+    padding: 15px;
+    cursor: pointer;
+    transition: 0.2s;
+}
+.payment-method-card:hover,
+.payment-method-card.active {
+    border-color: var(--bs-primary);
+    background: rgba(var(--bs-primary-rgb), 0.05);
+}
+.summary-card {
+    background: #fff;
+    border-radius: 12px;
+    padding: 25px;
+    position: sticky;
+    top: 100px;
+    border: 1px solid #dee2e6;
+    border-top: 4px solid var(--bs-primary);
+}
+.checkout-items {
+    max-height: 300px;
+    overflow-y: auto;
+}
+.form-control:focus,
+.form-select:focus {
+    border-color: var(--bs-primary);
+    box-shadow: 0 0 0 0.2rem rgba(var(--bs-primary-rgb), 0.25);
+}
+.loading-spinner {
+    display: none;
+    width: 20px;
+    height: 20px;
+    border: 2px solid #f3f3f3;
+    border-top: 2px solid var(--bs-primary);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin-left: 10px;
+}
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+@media (max-width: 768px) {
+    .summary-card {
+        position: relative;
+        top: 0;
+        margin-top: 20px;
+    }
+}
+.type-phuong { color: #0d6efd; }
+.type-xa { color: #198754; }
+.type-dac_khu { color: #dc3545; }
+.type-thi_tran { color: #ffc107; }
+
+/* QR Modal Styles */
+.qr-modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.7);
+    z-index: 9999;
+    justify-content: center;
+    align-items: center;
+}
+.qr-modal.show {
+    display: flex;
+}
+.qr-modal-content {
+    background: white;
+    border-radius: 20px;
+    padding: 30px;
+    max-width: 500px;
+    width: 90%;
+    text-align: center;
+    position: relative;
+    animation: modalIn 0.3s ease;
+    max-height: 90vh;
+    overflow-y: auto;
+}
+@keyframes modalIn {
+    from {
+        opacity: 0;
+        transform: translateY(-50px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+.qr-close {
+    position: absolute;
+    top: 15px;
+    right: 20px;
+    font-size: 28px;
+    cursor: pointer;
+    color: #999;
+}
+.qr-close:hover {
+    color: #333;
+}
+.qr-code {
+    margin: 20px 0;
+    padding: 20px;
+    background: #f8f9fa;
+    border-radius: 10px;
+}
+.qr-code canvas {
+    max-width: 250px;
+    height: auto;
+    margin: 0 auto;
+}
+.transfer-info {
+    background: #e8f0fe;
+    padding: 15px;
+    border-radius: 10px;
+    margin: 15px 0;
+    text-align: left;
+}
+.transfer-info p {
+    margin-bottom: 8px;
+    font-size: 14px;
+}
+.transfer-info .label {
+    font-weight: 600;
+    color: #555;
+}
+.copy-btn {
+    background: var(--bs-primary);
+    color: white;
+    border: none;
+    padding: 8px 15px;
+    border-radius: 8px;
+    cursor: pointer;
+    margin-top: 10px;
+    font-size: 14px;
+}
+.copy-btn:hover {
+    opacity: 0.9;
+}
+.bank-info {
+    font-family: monospace;
+    font-size: 16px;
+    font-weight: bold;
+    background: white;
+    padding: 10px;
+    border-radius: 5px;
+    margin: 10px 0;
+    word-break: break-all;
+}
+</style>
+
+<div class="checkout-container">
+    <div class="container">
+        <div class="row g-5">
+            <div class="col-lg-7">
+                <form method="post" id="checkoutForm" action="{% url 'store:create_order' %}">
+                    {% csrf_token %}
+
+                    <!-- Thông tin giao hàng -->
+                    <div class="mb-5">
+                        <h5 class="step-title"><i class="bi bi-geo-alt text-primary"></i> 1. Thông tin giao hàng</h5>
+                        <div class="row g-3">
+                            <div class="col-md-12">
+                                <input type="text" class="form-control" name="full_name" placeholder="Họ và tên người nhận" required />
+                            </div>
+                            <div class="col-md-6">
+                                <input type="tel" class="form-control" name="phone" placeholder="Số điện thoại" required />
+                            </div>
+                            <div class="col-md-6">
+                                <input type="email" class="form-control" name="email" placeholder="Email (Không bắt buộc)" />
+                            </div>
+
+                            <!-- Cấp 1: Tỉnh/Thành -->
+                            <div class="col-md-6">
+                                <select class="form-select" name="province_code" id="provinceSelect" required>
+                                    <option value="">Chọn Tỉnh/Thành phố</option>
+                                </select>
+                            </div>
+
+                            <!-- Cấp 2: Xã/Phường/Đặc khu -->
+                            <div class="col-md-6">
+                                <select class="form-select" name="ward_code" id="wardSelect" required disabled>
+                                    <option value="">Chọn Xã/Phường/Đặc khu</option>
+                                </select>
+                            </div>
+
+                            <!-- Cấp 3: Ấp/Xóm/Tổ dân phố -->
+                            <div class="col-md-12">
+                                <input type="text" class="form-control" name="hamlet" placeholder="Ấp / Xóm / Tổ dân phố (Không bắt buộc)" />
+                            </div>
+
+                            <div class="col-md-12">
+                                <textarea class="form-control" name="address" rows="2" placeholder="Địa chỉ chi tiết (Số nhà, tên đường...)" required></textarea>
+                            </div>
+                            
+                            <div class="col-md-12">
+                                <textarea class="form-control" name="note" rows="2" placeholder="Ghi chú đơn hàng (Không bắt buộc)"></textarea>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Phương thức thanh toán -->
+                    <div>
+                        <h5 class="step-title"><i class="bi bi-credit-card text-primary"></i> 2. Phương thức thanh toán</h5>
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <div class="payment-method-card active d-flex align-items-center" data-method="COD">
+                                    <i class="bi bi-cash-stack fs-4 me-3 text-primary"></i>
+                                    <div>
+                                        <p class="mb-0 fw-bold small">Thanh toán khi nhận hàng (COD)</p>
+                                        <small class="text-muted">Trả tiền mặt khi nhận hàng</small>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="payment-method-card d-flex align-items-center" data-method="BANK">
+                                    <i class="bi bi-qr-code-scan fs-4 me-3 text-primary"></i>
+                                    <div>
+                                        <p class="mb-0 fw-bold small">Chuyển khoản</p>
+                                        <small class="text-muted">Thanh toán qua QR Code</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <input type="hidden" name="payment_method" id="paymentMethod" value="COD" />
+                    </div>
+                </form>
+            </div>
+
+            <div class="col-lg-5">
+                <div class="summary-card shadow-sm">
+                    <h5 class="fw-bold mb-4">Đơn hàng của bạn</h5>
+                    <div class="checkout-items mb-4">
+                        {% for item in cart_items %}
+                        <div class="d-flex justify-content-between small mb-2">
+                            <span>{{ item.product.name }} x {{ item.quantity }}</span>
+                            <span class="fw-bold">{{ item.total_price|dot_thousands }}đ</span>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    <hr />
+                    <div class="d-flex justify-content-between mb-2">
+                        <span class="small">Phí vận chuyển:</span>
+                        <span class="text-success small">Miễn phí</span>
+                    </div>
+                    <div class="d-flex justify-content-between mb-4">
+                        <span class="fw-bold">Thành tiền:</span>
+                        <span class="fw-bold fs-4 text-danger" id="totalAmountDisplay">{{ total_amount|dot_thousands }}đ</span>
+                    </div>
+                    <div class="bg-light p-3 rounded mb-4">
+                        <p class="small text-muted mb-0">
+                            <i class="bi bi-info-circle me-1"></i>
+                            Bằng cách nhấn nút Đặt hàng, bạn đồng ý với các điều khoản mua hàng của E-STORE.
+                        </p>
+                    </div>
+                    <button type="button" class="btn btn-primary btn-lg w-100 rounded-pill py-3 fw-bold" id="submitOrderBtn">
+                        XÁC NHẬN ĐẶT HÀNG
+                        <span class="loading-spinner" id="loadingSpinner"></span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- QR Modal -->
+<div id="qrModal" class="qr-modal">
+    <div class="qr-modal-content">
+        <span class="qr-close" id="qrCloseBtn">&times;</span>
+        <h4 class="fw-bold mb-3">
+            <i class="bi bi-qr-code-scan text-primary me-2"></i>
+            Thanh toán qua QR Code
+        </h4>
+        <p class="text-muted mb-3">Quét mã QR bằng ứng dụng ngân hàng</p>
+        
+        <div class="qr-code" id="qrCodeContainer">
+            <div id="qrPlaceholder">Đang tạo mã QR...</div>
+        </div>
+        
+        <div class="transfer-info">
+            <p><span class="label">🏦 Ngân hàng:</span> <strong>MBbank</strong> - Chi nhánh An Giang</p>
+            <p><span class="label">💳 Số tài khoản:</span> <strong>4610115596001</strong></p>
+            <p><span class="label">👤 Chủ tài khoản:</span> <strong>TRAN VAN THON</strong></p>
+            <p><span class="label">💰 Số tiền:</span> <strong id="bankAmount" class="text-danger">{{ total_amount|dot_thousands }}đ</strong></p>
+            <p><span class="label">📝 Nội dung chuyển khoản:</span></p>
+            <div class="bank-info" id="bankContent"></div>
+            <button class="copy-btn" id="copyContentBtn">
+                <i class="bi bi-copy"></i> Sao chép nội dung
+            </button>
+        </div>
+        
+        <div class="alert alert-info mt-3 small">
+            <i class="bi bi-info-circle"></i>
+            Sau khi chuyển khoản thành công, vui lòng nhấn "Đã thanh toán" để xác nhận đơn hàng.
+        </div>
+        
+        <div class="d-flex gap-3 mt-3">
+            <button class="btn btn-outline-secondary flex-grow-1" id="cancelPaymentBtn">
+                <i class="bi bi-x-circle"></i> Hủy
+            </button>
+            <button class="btn btn-success flex-grow-1" id="confirmPaidBtn">
+                <i class="bi bi-check-circle"></i> Đã thanh toán
+            </button>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/qrcodejs2@0.0.2/qrcode.min.js"></script>
+<script>
+// Biến toàn cục
+let currentOrderId = null;
+let currentOrderCode = null;
+let currentTotalAmount = parseFloat("{{ total_amount|default:'0' }}");
+
+// 1. Danh sách 34 tỉnh/thành
+const PROVINCES = [
+    { code: "01", name: "Thành phố Hà Nội" },
+    { code: "04", name: "Tỉnh Cao Bằng" },
+    { code: "08", name: "Tỉnh Tuyên Quang" },
+    { code: "11", name: "Tỉnh Điện Biên" },
+    { code: "12", name: "Tỉnh Lai Châu" },
+    { code: "14", name: "Tỉnh Sơn La" },
+    { code: "15", name: "Tỉnh Lào Cai" },
+    { code: "19", name: "Tỉnh Thái Nguyên" },
+    { code: "20", name: "Tỉnh Lạng Sơn" },
+    { code: "22", name: "Tỉnh Quảng Ninh" },
+    { code: "24", name: "Tỉnh Bắc Ninh" },
+    { code: "25", name: "Tỉnh Phú Thọ" },
+    { code: "31", name: "Thành phố Hải Phòng" },
+    { code: "33", name: "Tỉnh Hưng Yên" },
+    { code: "37", name: "Tỉnh Ninh Bình" },
+    { code: "38", name: "Tỉnh Thanh Hóa" },
+    { code: "40", name: "Tỉnh Nghệ An" },
+    { code: "42", name: "Tỉnh Hà Tĩnh" },
+    { code: "44", name: "Tỉnh Quảng Trị" },
+    { code: "46", name: "Thành phố Huế" },
+    { code: "48", name: "Thành phố Đà Nẵng" },
+    { code: "51", name: "Tỉnh Quảng Ngãi" },
+    { code: "52", name: "Tỉnh Gia Lai" },
+    { code: "56", name: "Tỉnh Khánh Hòa" },
+    { code: "66", name: "Tỉnh Đắk Lắk" },
+    { code: "68", name: "Tỉnh Lâm Đồng" },
+    { code: "75", name: "Tỉnh Đồng Nai" },
+    { code: "79", name: "Thành phố Hồ Chí Minh" },
+    { code: "80", name: "Tỉnh Tây Ninh" },
+    { code: "82", name: "Tỉnh Đồng Tháp" },
+    { code: "86", name: "Tỉnh Vĩnh Long" },
+    { code: "91", name: "Tỉnh An Giang" },
+    { code: "92", name: "Thành phố Cần Thơ" },
+    { code: "96", name: "Tỉnh Cà Mau" }
+];
+
+const TYPE_MAP = {
+    'phuong': 'Phường',
+    'xa': 'Xã',
+    'dac_khu': 'Đặc khu',
+    'thi_tran': 'Thị trấn'
+};
+
+let wardsCache = {};
+const provinceSelect = document.getElementById('provinceSelect');
+const wardSelect = document.getElementById('wardSelect');
+const submitBtn = document.getElementById('submitOrderBtn');
+const loadingSpinner = document.getElementById('loadingSpinner');
+const qrModal = document.getElementById('qrModal');
+let selectedPaymentMethod = 'COD';
+
+async function loadWardsForProvince(provinceCode) {
+    if (wardsCache[provinceCode]) return wardsCache[provinceCode];
+    try {
+        const url = `/static/data/${provinceCode}.json`;
+        console.log(`Đang tải: ${url}`);
+        const response = await fetch(url);
+        if (!response.ok) throw new Error('Không thể tải dữ liệu');
+        const data = await response.json();
+        wardsCache[provinceCode] = data;
+        return data;
+    } catch (error) {
+        console.error('Lỗi:', error);
+        return [];
+    }
+}
+
+function initProvinces() {
+    PROVINCES.forEach(province => {
+        const option = document.createElement('option');
+        option.value = province.code;
+        option.textContent = province.name;
+        provinceSelect.appendChild(option);
+    });
+}
+
+async function loadWardsByProvince(provinceCode) {
+    wardSelect.innerHTML = '<option value="">Đang tải dữ liệu...</option>';
+    wardSelect.disabled = true;
+    const data = await loadWardsForProvince(provinceCode);
+    if (!data || !Array.isArray(data) || data.length === 0) {
+        wardSelect.innerHTML = '<option value="">Không có dữ liệu</option>';
+        return;
+    }
+    wardSelect.innerHTML = '<option value="">Chọn Xã/Phường/Đặc khu</option>';
+    const communes = data.filter(item => item.level === 'commune');
+    communes.sort((a, b) => (a.name_vi || '').localeCompare(b.name_vi || '', 'vi'));
+    communes.forEach(commune => {
+        const option = document.createElement('option');
+        option.value = commune.code;
+        const typeVI = TYPE_MAP[commune.admin_type] || 'Xã';
+        option.textContent = `${typeVI} ${commune.name_vi}`;
+        wardSelect.appendChild(option);
+    });
+    wardSelect.disabled = false;
+}
+
+document.querySelectorAll('.payment-method-card').forEach(card => {
+    card.addEventListener('click', function() {
+        document.querySelectorAll('.payment-method-card').forEach(c => c.classList.remove('active'));
+        this.classList.add('active');
+        selectedPaymentMethod = this.dataset.method;
+        document.getElementById('paymentMethod').value = selectedPaymentMethod;
+    });
+});
+
+provinceSelect.addEventListener('change', async function() {
+    if (this.value) await loadWardsByProvince(this.value);
+    else wardSelect.disabled = true;
+});
+
+// Tạo QR Code
+function generateQRCode(orderCode, amount) {
+
+    const bankCode = '970422';
+    const accountNo = '4610115596001';
+    const content = `DH${orderCode}`;
+
+    const qrData =
+        `https://img.vietqr.io/image/${bankCode}-${accountNo}-compact.png` +
+        `?amount=${amount}` +
+        `&addInfo=${encodeURIComponent(content)}` +
+        `&template=compact`;
+
+    const qrContainer =
+        document.getElementById('qrCodeContainer');
+
+    qrContainer.innerHTML = `
+        <img
+            src="${qrData}"
+            alt="VietQR"
+            style="max-width:250px;width:100%;height:auto;"
+        >
+    `;
+}
+
+// Cập nhật nội dung chuyển khoản
+function updateTransferContent(orderCode, amount) {
+    const now = new Date();
+        const dateStr = `${now.getDate().toString().padStart(2,'0')}/${(now.getMonth()+1).toString().padStart(2,'0')}/${now.getFullYear()}`;
+    const content = `DH${orderCode} - ${dateStr}`;
+    document.getElementById('bankContent').innerHTML = `<code style="font-size: 16px; word-break: break-all;">${content}</code>`;
+    document.getElementById('bankAmount').innerHTML = amount.toLocaleString('vi-VN') + 'đ';
+    return content;
+}
+
+// Xử lý submit đơn hàng
+submitBtn.addEventListener('click', async function() {
+    const form = document.getElementById('checkoutForm');
+    const fullName = form.full_name.value.trim();
+    const phone = form.phone.value.trim();
+    const provinceCode = provinceSelect.value;
+    const wardCode = wardSelect.value;
+    const addressDetail = form.address.value.trim();
+    
+    if (!fullName) { alert('Vui lòng nhập họ tên người nhận'); return; }
+    if (!phone) { alert('Vui lòng nhập số điện thoại'); return; }
+    const phoneRegex = /(0[3|5|7|8|9])+([0-9]{8})\b/;
+    if (!phoneRegex.test(phone)) { alert('Số điện thoại không hợp lệ'); return; }
+    if (!provinceCode) { alert('Vui lòng chọn Tỉnh/Thành phố'); return; }
+    if (!wardCode) { alert('Vui lòng chọn Xã/Phường'); return; }
+    if (!addressDetail) { alert('Vui lòng nhập địa chỉ chi tiết'); return; }
+    
+    const provinceName = provinceSelect.options[provinceSelect.selectedIndex]?.textContent || '';
+    const wardText = wardSelect.options[wardSelect.selectedIndex]?.textContent || '';
+    const hamlet = form.hamlet.value.trim();
+    
+    let fullAddress = `${addressDetail}, ${wardText}, ${provinceName}`;
+    if (hamlet) fullAddress = `${addressDetail}, ${hamlet}, ${wardText}, ${provinceName}`;
+    
+    // Thêm hidden fields
+    let fullAddressInput = document.querySelector('input[name="full_address"]');
+    if (!fullAddressInput) {
+        fullAddressInput = document.createElement('input');
+        fullAddressInput.type = 'hidden';
+        fullAddressInput.name = 'full_address';
+        form.appendChild(fullAddressInput);
+    }
+    fullAddressInput.value = fullAddress;
+    
+    let provinceNameInput = document.querySelector('input[name="province_name"]');
+    if (!provinceNameInput) {
+        provinceNameInput = document.createElement('input');
+        provinceNameInput.type = 'hidden';
+        provinceNameInput.name = 'province_name';
+        form.appendChild(provinceNameInput);
+    }
+    provinceNameInput.value = provinceName;
+    
+    let wardNameInput = document.querySelector('input[name="ward_name"]');
+    if (!wardNameInput) {
+        wardNameInput = document.createElement('input');
+        wardNameInput.type = 'hidden';
+        wardNameInput.name = 'ward_name';
+        form.appendChild(wardNameInput);
+    }
+    wardNameInput.value = wardText;
+    
+    submitBtn.disabled = true;
+    loadingSpinner.style.display = 'inline-block';
+    
+    try {
+        const formData = new FormData(form);
+        const response = await fetch(form.action, {
+            method: 'POST',
+            body: formData,
+            headers: { 'X-Requested-With': 'XMLHttpRequest' }
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            currentOrderId = result.order_id;
+            currentOrderCode = result.order_code;
+            
+            if (selectedPaymentMethod === 'COD') {
+                window.location.href = result.redirect_url || `/order/success/${currentOrderId}/`;
+            } else {
+                updateTransferContent(currentOrderCode, currentTotalAmount);
+                generateQRCode(currentOrderCode, currentTotalAmount);
+                qrModal.classList.add('show');
+                submitBtn.disabled = false;
+                loadingSpinner.style.display = 'none';
+            }
+        } else {
+            alert(result.error || 'Có lỗi xảy ra, vui lòng thử lại');
+            submitBtn.disabled = false;
+            loadingSpinner.style.display = 'none';
+        }
+    } catch (error) {
+        alert('Lỗi kết nối, vui lòng thử lại');
+        submitBtn.disabled = false;
+        loadingSpinner.style.display = 'none';
+    }
+});
+
+// QR Modal handlers
+document.getElementById('qrCloseBtn').addEventListener('click', () => qrModal.classList.remove('show'));
+document.getElementById('cancelPaymentBtn').addEventListener('click', () => qrModal.classList.remove('show'));
+
+document.getElementById('copyContentBtn').addEventListener('click', async () => {
+    const content = document.getElementById('bankContent').innerText;
+    try {
+        await navigator.clipboard.writeText(content);
+        alert('Đã sao chép nội dung chuyển khoản!');
+    } catch (err) {
+        alert('Không thể sao chép, vui lòng copy thủ công');
+    }
+});
+
+document.getElementById('confirmPaidBtn').addEventListener('click', async () => {
+    try {
+        const response = await fetch('{% url 'store:confirm_payment' %}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+            },
+            body: JSON.stringify({
+                order_id: currentOrderId,
+                payment_method: 'BANK'
+            })
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            window.location.href = result.redirect_url;
+        } else {
+            alert(result.error || 'Xác nhận thanh toán thất bại');
+        }
+    } catch (error) {
+        alert('Lỗi xác nhận thanh toán');
+    }
+});
+
+// Khởi tạo
+initProvinces();
+
+// Xử lý nếu có lỗi từ server
+{% if form_errors %}
+alert('{{ form_errors|escapejs }}');
+{% endif %}
+</script>
+{% endblock %}
+

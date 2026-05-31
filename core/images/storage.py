@@ -1,5 +1,4 @@
-import glob
-import os
+import glob, os
 
 from django.core.files.storage import default_storage
 

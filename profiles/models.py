@@ -8,7 +8,6 @@ from django.contrib.auth.models import (
     PermissionsMixin,
     BaseUserManager,
 )
-from core.images.utils import delete_image_versions
 from core.images.paths import original_upload_path
 from django.utils import timezone
 from core.images.mixins import ImageOptimizationsMixin

@@ -1,4 +1,3 @@
-# core/images/versions.py
 
 IMAGE_VERSIONS = {
     "avatar_thumb": {

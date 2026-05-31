@@ -2,7 +2,7 @@ from django.contrib import messages
 from django.contrib.auth import get_user_model
 from django.shortcuts import get_object_or_404, redirect, render
 from django.contrib.auth.decorators import login_required
-from django.http import HttpResponseRedirect
+from django.http import HttpResponseRedirect, JsonResponse
 from django.views.generic import (
     DeleteView,
     DetailView,
@@ -20,15 +20,446 @@ from django.forms import modelform_factory
 from django.utils import timezone
 from collections import OrderedDict
 import unicodedata
+from django.core.exceptions import ValidationError
 
-from .models import Product, Banner, Category, Brand, ProductImage, Order, OrderItem
+from .models import (
+    Product,
+    Banner,
+    Category,
+    Brand,
+    ProductImage,
+    Order,
+    OrderItem,
+)
 from store.forms import ProductUpdateForm, CategoryUpdateForm
 from tools.breadcrumb_utils import get_breadcrumb
 from tools.required_role import RoleRequiredMixin
 from tools.utils import get_or_create_cart
+import json, uuid
+from django.views.decorators.csrf import csrf_exempt
 
 
 # Cart
+def order_tracking(request, order_id):
+    """Trang theo dõi đơn hàng"""
+    order = get_object_or_404(Order, id=order_id)
+
+    if order.customer and order.customer != request.user:
+        if not request.user.is_staff:
+            return redirect("home")
+
+    timeline = get_order_timeline(order)
+
+    context = {
+        "order": order,
+        "order_items": order.items.all(),
+        "timeline": timeline,
+    }
+    return render(request, "store/cart/order_tracking.html", context)
+
+
+def order_success(request, order_id):
+    """Trang xác nhận đơn hàng thành công"""
+    order = get_object_or_404(Order, id=order_id)
+
+    # Kiểm tra quyền truy cập
+    if order.customer and order.customer != request.user:
+        if not request.user.is_staff and not request.user.is_superuser:
+            return redirect("home")
+
+    # Tạo timeline cho đơn hàng
+    timeline = {
+        "order_placed": {
+            "name": "Đơn hàng đã đặt",
+            "description": "Hệ thống đã xác nhận đơn hàng của bạn",
+            "completed": True,
+            "time": (
+                order.created_at.strftime("%d/%m/%Y - %H:%M")
+                if order.created_at
+                else None
+            ),
+        },
+        "confirmed": {
+            "name": "Đã xác nhận",
+            "description": "Đơn hàng đã được xác nhận",
+            "completed": order.status
+            in ["CONFIRMED", "PACKED", "SHIPPING", "DELIVERED", "COMPLETED"],
+            "time": (
+                order.confirmed_at.strftime("%d/%m/%Y - %H:%M")
+                if order.confirmed_at
+                else None
+            ),
+        },
+        "packed": {
+            "name": "Đã đóng gói",
+            "description": "Kiện hàng đã sẵn sàng để gửi đi",
+            "completed": order.status
+            in ["PACKED", "SHIPPING", "DELIVERED", "COMPLETED"],
+            "time": (
+                order.packed_at.strftime("%d/%m/%Y - %H:%M")
+                if order.packed_at
+                else None
+            ),
+        },
+        "shipping": {
+            "name": "Đang giao hàng",
+            "description": "Đơn hàng đang trên đường đến bạn",
+            "completed": order.status in ["SHIPPING", "DELIVERED", "COMPLETED"],
+            "time": (
+                order.shipping_at.strftime("%d/%m/%Y - %H:%M")
+                if order.shipping_at
+                else None
+            ),
+        },
+        "delivered": {
+            "name": "Giao hàng thành công",
+            "description": "Đơn hàng đã được giao",
+            "completed": order.status in ["DELIVERED", "COMPLETED"],
+            "time": (
+                order.delivered_at.strftime("%d/%m/%Y - %H:%M")
+                if order.delivered_at
+                else None
+            ),
+        },
+    }
+
+    context = {
+        "order": order,
+        "timeline": timeline,
+    }
+
+    return render(request, "order_success.html", context)
+
+
+def get_order_timeline(order):
+    """Tạo timeline cho đơn hàng"""
+    timeline = {
+        "order_placed": {
+            "name": "Đơn hàng đã đặt",
+            "icon": "bi-receipt",
+            "description": "Hệ thống đã xác nhận đơn hàng của bạn",
+            "completed": True,
+            "time": (
+                order.created_at.strftime("%d/%m/%Y - %H:%M")
+                if order.created_at
+                else None
+            ),
+        },
+        "confirmed": {
+            "name": "Đã xác nhận",
+            "icon": "bi-check-circle",
+            "description": "Đơn hàng đã được xác nhận",
+            "completed": order.status
+            in ["CONFIRMED", "PACKED", "SHIPPING", "DELIVERED", "COMPLETED"],
+            "time": (
+                order.confirmed_at.strftime("%d/%m/%Y - %H:%M")
+                if order.confirmed_at
+                else None
+            ),
+        },
+        "packed": {
+            "name": "Đã đóng gói",
+            "icon": "bi-box-seam",
+            "description": "Kiện hàng đã sẵn sàng để gửi đi",
+            "completed": order.status
+            in ["PACKED", "SHIPPING", "DELIVERED", "COMPLETED"],
+            "time": (
+                order.packed_at.strftime("%d/%m/%Y - %H:%M")
+                if order.packed_at
+                else None
+            ),
+        },
+        "shipping": {
+            "name": "Đang giao hàng",
+            "icon": "bi-truck",
+            "description": "Đơn hàng đang trên đường đến bạn",
+            "completed": order.status in ["SHIPPING", "DELIVERED", "COMPLETED"],
+            "time": (
+                order.shipping_at.strftime("%d/%m/%Y - %H:%M")
+                if order.shipping_at
+                else None
+            ),
+        },
+        "delivered": {
+            "name": "Giao hàng thành công",
+            "icon": "bi-house-check",
+            "description": "Đơn hàng đã được giao",
+            "completed": order.status in ["DELIVERED", "COMPLETED"],
+            "time": (
+                order.delivered_at.strftime("%d/%m/%Y - %H:%M")
+                if order.delivered_at
+                else None
+            ),
+        },
+    }
+    return timeline
+
+
+def create_order(request):
+    if request.method != "POST":
+        return redirect("store:cart_detail")
+
+    order = get_or_create_cart(request)
+
+    if not order.items.exists():
+        return redirect("store:cart_detail")
+
+    payment_method = request.POST.get("payment_method", "COD").upper()
+
+    # Thông tin khách hàng
+    order.full_name = request.POST.get("full_name")
+    order.phone = request.POST.get("phone")
+    order.email = request.POST.get("email", "")
+
+    # Địa chỉ
+    order.province = request.POST.get("province_name", "")
+    order.province_code = request.POST.get("province_code", "")
+    order.ward = request.POST.get("ward_name", "")
+    order.ward_code = request.POST.get("ward_code", "")
+    order.hamlet = request.POST.get("hamlet", "")
+    order.address = request.POST.get("address", "")
+    order.full_address = request.POST.get("full_address", "")
+
+    # Ghi chú
+    order.note = request.POST.get("note", "")
+
+    # Mã đơn hàng
+    if not order.order_number:
+        order.order_number = (
+            f"DH{timezone.now().strftime('%y%m%d')}" f"{uuid.uuid4().hex[:6].upper()}"
+        )
+
+    # Trạng thái đơn hàng
+    order.status = Order.Status.PENDING
+    order.complete = True
+
+    # Thanh toán
+    order.payment_method = payment_method
+
+    order.payment_status = (
+        Order.PaymentStatus.PENDING
+        if payment_method == "COD"
+        else Order.PaymentStatus.AWAITING
+    )
+
+    # Tính lại tiền
+    order.update_totals()
+
+    order.save()
+
+    if request.headers.get("X-Requested-With") == "XMLHttpRequest":
+        return JsonResponse(
+            {
+                "success": True,
+                "order_id": order.id,
+                "order_code": order.order_number,
+                "total_amount": float(order.total_amount),
+            }
+        )
+
+    return redirect(
+        "order_success",
+        order_id=order.id,
+    )
+
+
+def order_success(request, order_id):
+
+    order = get_object_or_404(
+        Order.objects.prefetch_related("items__product"),
+        id=order_id,
+    )
+
+    if (
+        order.customer
+        and request.user.is_authenticated
+        and order.customer != request.user
+    ):
+        return redirect("home")
+
+    context = {
+        "order": order,
+        "order_items": order.items.all(),
+        "timeline": get_order_timeline(order),
+    }
+
+    return render(
+        request,
+        "store/cart/order_success.html",
+        context,
+    )
+
+
+@csrf_exempt
+def confirm_payment(request):
+    """Xác nhận thanh toán qua chuyển khoản"""
+    if request.method != "POST":
+        return JsonResponse({"success": False, "error": "Method not allowed"})
+
+    try:
+        data = json.loads(request.body)
+        order_id = data.get("order_id")
+
+        if not order_id:
+            return JsonResponse({"success": False, "error": "Thiếu mã đơn hàng"})
+
+        order = get_object_or_404(Order, id=order_id)
+
+        # Cập nhật trạng thái thanh toán
+        order.payment_status = Order.PaymentStatus.PAID
+        order.status = Order.Status.CONFIRMED
+        order.paid_at = timezone.now()
+        order.save()
+
+        return JsonResponse(
+            {
+                "success": True,
+                "redirect_url": reverse("store:order_success", args=[order_id]),
+            }
+        )
+
+    except json.JSONDecodeError:
+        return JsonResponse({"success": False, "error": "Dữ liệu không hợp lệ"})
+    except Exception as e:
+        return JsonResponse({"success": False, "error": str(e)})
+
+
+def get_order_timeline(order):
+    """Tạo timeline cho đơn hàng"""
+    timeline = {
+        "order_placed": {
+            "name": "Đơn hàng đã đặt",
+            "icon": "bi-receipt",
+            "description": "Hệ thống đã xác nhận đơn hàng của bạn",
+            "completed": True,
+            "time": order.created_at.strftime("%d/%m/%Y - %H:%M"),
+        },
+        "packed": {
+            "name": "Đã đóng gói",
+            "icon": "bi-box-seam",
+            "description": "Kiện hàng đã sẵn sàng để gửi đi",
+            "completed": order.status
+            in ["packed", "shipping", "delivered", "completed"],
+            "time": (
+                order.packed_at.strftime("%d/%m/%Y - %H:%M")
+                if order.packed_at
+                else None
+            ),
+        },
+        "shipping": {
+            "name": "Đang giao hàng",
+            "icon": "bi-truck",
+            "description": "Đơn hàng đang trên đường đến bạn",
+            "completed": order.status in ["shipping", "delivered", "completed"],
+            "time": (
+                order.shipping_at.strftime("%d/%m/%Y - %H:%M")
+                if order.shipping_at
+                else None
+            ),
+        },
+        "delivered": {
+            "name": "Giao hàng thành công",
+            "icon": "bi-house-check",
+            "description": "Đơn hàng đã được giao",
+            "completed": order.status in ["delivered", "completed"],
+            "time": (
+                order.delivered_at.strftime("%d/%m/%Y - %H:%M")
+                if order.delivered_at
+                else None
+            ),
+        },
+    }
+    return timeline
+
+
+# Check out
+def checkout(request):
+
+    order = get_or_create_cart(request)
+
+    if not order.items.exists():
+        return redirect("store:cart_detail")
+
+    context = {
+        "order": order,
+        "cart_items": order.items.select_related("product"),
+        "total_amount": order.total_amount,
+    }
+
+    return render(
+        request,
+        "store/cart/checkout.html",
+        context,
+    )
+
+
+# update_from_cart
+def update_cart_item(request, item_id):
+    if request.method != "POST":
+        return JsonResponse(
+            {"success": False, "error": "Method not allowed"}, status=405
+        )
+
+    order = get_or_create_cart(request)
+    item = get_object_or_404(OrderItem, id=item_id, order=order)
+
+    try:
+        data = json.loads(request.body)
+        quantity = int(data.get("quantity", item.quantity))
+
+        if quantity <= 0:
+            item.delete()
+            return JsonResponse({"success": True, "deleted": True})
+        else:
+            item.quantity = quantity
+            item.save()
+            return JsonResponse(
+                {
+                    "success": True,
+                    "quantity": item.quantity,
+                    "item_total": item.price * item.quantity,
+                }
+            )
+
+    except (ValueError, ValidationError, json.JSONDecodeError):
+        return JsonResponse(
+            {"success": False, "error": "Số lượng không hợp lệ!"}, status=400
+        )
+
+
+def remove_from_cart(request, item_id):
+
+    order = get_or_create_cart(request)
+
+    item = get_object_or_404(
+        OrderItem,
+        id=item_id,
+        order=order,
+    )
+
+    item.delete()
+
+    return redirect("store:cart_detail")
+
+
+# Cart detail
+def cart_detail(request):
+
+    order = get_or_create_cart(request)
+
+    context = {
+        "order": order,
+        "cart_items": order.items.all(),
+        "total_amount": order.total_amount,
+    }
+
+    return render(
+        request,
+        "store/cart/cart_detail.html",
+        context,
+    )
+
+
 def add_to_cart(request, slug):
     product = get_object_or_404(Product, slug=slug)
     order = get_or_create_cart(request)
@@ -103,7 +534,9 @@ class DashboardAdminView(DashboardBaseView):
             or 0
         )
         if yesterday_revenue:
-            revenue_change = ((daily_revenue - yesterday_revenue) / yesterday_revenue) * 100
+            revenue_change = (
+                (daily_revenue - yesterday_revenue) / yesterday_revenue
+            ) * 100
             revenue_trend_text = f"{revenue_change:+.0f}% so với hôm qua"
             revenue_trend_icon = (
                 "bi-arrow-up" if revenue_change >= 0 else "bi-arrow-down"
@@ -147,8 +580,12 @@ def normalize_search_text(value):
 
 def product_matches_search(product, normalized_query):
     normalized_name = normalize_search_text(product.name)
-    normalized_brand = normalize_search_text(product.brand.name if product.brand else "")
-    normalized_category = normalize_search_text(product.category.name if product.category else "")
+    normalized_brand = normalize_search_text(
+        product.brand.name if product.brand else ""
+    )
+    normalized_category = normalize_search_text(
+        product.category.name if product.category else ""
+    )
     searchable_text = " ".join([normalized_name, normalized_brand, normalized_category])
     words = searchable_text.split()
 
@@ -163,9 +600,11 @@ def product_matches_search(product, normalized_query):
 
 def search(request):
     query = request.GET.get("query", "").strip()
-    products = Product.active.filter(is_sold=False).select_related(
-        "brand", "category"
-    ).prefetch_related("images")
+    products = (
+        Product.active.filter(is_sold=False)
+        .select_related("brand", "category")
+        .prefetch_related("images")
+    )
     if query:
         normalized_query = normalize_search_text(query)
         matched_products = []
@@ -176,7 +615,8 @@ def search(request):
                 matched_products.append((rank, product.name.casefold(), product))
 
         products = [
-            product for _, _, product in sorted(matched_products, key=lambda item: item[:2])
+            product
+            for _, _, product in sorted(matched_products, key=lambda item: item[:2])
         ]
     return render(request, "core/search.html", {"products": products, "query": query})
 

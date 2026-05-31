@@ -3,6 +3,7 @@ from django.contrib.sites.shortcuts import get_current_site
 # Lấy tên domain
 from django.core.cache import cache
 from store.models import Category, Order
+from django.db.models import Prefetch
 
 
 def global_categories(request):
@@ -14,11 +15,16 @@ def global_categories(request):
     categories = cache.get("main_categories")
 
     if categories is None:
-        # Chỉ query database khi cache hết hạn
-        categories = Category.active.filter(parent__isnull=True).prefetch_related(
-            "children"
+        # Nếu không có trong cache, truy vấn database
+        categories = list(
+            Category.active.filter(parent__isnull=True).prefetch_related(
+                Prefetch(
+                    "children",
+                    queryset=Category.active.all(),
+                    to_attr="active_children",
+                )
+            )
         )
-
         # Lưu vào cache trong 30 phút (1800 giây)
         cache.set("main_categories", categories, 1800)
 

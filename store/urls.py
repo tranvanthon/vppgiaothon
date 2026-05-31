@@ -4,7 +4,16 @@ from store import views
 app_name = "store"
 
 urlpatterns = [
+    # Cart
+    path("order/tracking/<int:order_id>/", views.order_tracking, name="order_tracking"),
+    path("create-order/", views.create_order, name="create_order"),
+    path("order/success/<int:order_id>/", views.order_success, name="order_success"),
+    path("confirm-payment/", views.confirm_payment, name="confirm_payment"),
+    path("checkout/", views.checkout, name="checkout"),
+    path("cart/update/<int:item_id>/", views.update_cart_item, name="cart_update"),
+    path("cart/detail/", views.cart_detail, name="cart_detail"),
     path("cart/add/<slug:slug>/", views.add_to_cart, name="add_to_cart"),
+    path("cart/remove/<int:item_id>/", views.remove_from_cart, name="remove_from_cart"),
     # Dashboards hệ thống
     path(
         "admin-dashboard/", views.DashboardAdminView.as_view(), name="admin_dashboard"

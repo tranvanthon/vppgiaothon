@@ -127,16 +127,18 @@
             {% for item in cart_items %}
               <div class="cart-item-mini">
                 <img src="{{ item.product.main_image_url }}" alt="{{ item.product.name }}" />
-                <div>
-                  <p class="mb-0 fw-bold small">{{ item.product.name }}</p>
-                  <p class="mb-0 text-primary small">{{ item.quantity }} x {{ item.price|dot_thousands }}đ</p>
-                </div>
+                <p class="mb-0 fw-bold small">{{ item.product.name }}</p>
+                <p class="mb-0 text-primary small">{{ item.quantity }} x {{ item.price|dot_thousands }}đ</p>
+                <form action="{% url 'store:remove_from_cart' item.id %}" method="post">
+                  {% csrf_token %}
+                  <button type="submit" class="btn btn-outline-danger btn-sm" title="Xoá khỏi giỏ hàng"><i class="bi bi-bag-x-fill"></i></button>
+                </form>
               </div>
             {% empty %}
               <p class="text-muted small mb-3">Giỏ hàng đang trống.</p>
             {% endfor %}
             <div class="d-grid gap-2">
-              <a href="#" class="btn btn-primary btn-sm">Thanh toán ngay</a>
+              <a href="{% url 'store:cart_detail' %}" class="btn btn-primary btn-sm">Xem giỏ hàng</a>
             </div>
           </div>
         </div>
