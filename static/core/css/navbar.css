@@ -365,3 +365,21 @@
         height: auto;
     }
 }
+
+/* search */
+.search-wrapper {
+    position: relative;
+}
+
+#search-results {
+    position: fixed;
+    top: 100%;
+    left: 0;
+    width: 100%;
+
+    background: white;
+    z-index: 9999;
+
+    border-radius: 10px;
+    box-shadow: 0 5px 20px rgba(0, 0, 0, .15);
+}

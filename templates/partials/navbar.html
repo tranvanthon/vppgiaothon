@@ -115,8 +115,8 @@
       </ul>
 
       <div class="d-none d-lg-flex align-items-center gap-3">
-        <form class="position-relative" method="get" action="{% url 'store:search' %}" role="search">
-          <input class="form-control rounded-pill pe-5" type="search" name="query" placeholder="Tìm sản phẩm..." />
+        <form class="position-relative" role="search" action="{% url 'store:search' %}" method="get">
+          <input class="form-control rounded-pill pe-5" type="search" name="query" placeholder="Tìm sản phẩm..." hx-get="{% url 'store:search' %}" hx-trigger="keyup changed delay:500ms" hx-target="#search-results" hx-swap="innerHTML" />
           <button class="btn position-absolute end-0 top-0 text-primary" type="submit"><i class="bi bi-search"></i></button>
         </form>
 
@@ -129,7 +129,7 @@
                 <img src="{{ item.product.main_image_url }}" alt="{{ item.product.name }}" />
                 <p class="mb-0 fw-bold small">{{ item.product.name }}</p>
                 <p class="mb-0 text-primary small">{{ item.quantity }} x {{ item.price|dot_thousands }}đ</p>
-                <form action="{% url 'store:remove_from_cart' item.id %}" method="post">
+                <form action="{% url 'store:remove_from_cart' item.pk %}" method="post" class="ms-auto">
                   {% csrf_token %}
                   <button type="submit" class="btn btn-outline-danger btn-sm" title="Xoá khỏi giỏ hàng"><i class="bi bi-bag-x-fill"></i></button>
                 </form>
@@ -177,9 +177,12 @@
     </div>
   </div>
   <div class="search-mobile-container d-lg-none" id="searchMobileBox">
-    <form class="d-flex" method="get" action="{% url 'store:search' %}" role="search">
-      <input class="form-control me-2" type="search" name="query" placeholder="Bạn tìm gì hôm nay?" />
-      <button class="btn btn-primary" type="submit">Tìm</button>
+    <<form class="position-relative" role="search">
+      <input class="form-control rounded-pill pe-5" type="search" name="query" placeholder="Tìm sản phẩm..." hx-get="{% url 'store:search' %}" hx-trigger="keyup changed delay:500ms" hx-target="#search-results" hx-swap="innerHTML" />
+      <button class="btn position-absolute end-0 top-0 text-primary" type="submit"><i class="bi bi-search"></i></button>
     </form>
   </div>
 </nav>
+<div class="search-wrapper container">
+  <div id="search-results"></div>
+</div>

@@ -1,29 +1,12 @@
 {% extends 'base.html' %}
+{% load static %}
 
 {% block navbar %}
   {% include 'partials/navbar.html' %}
 {% endblock %}
 
-{% block hero %}
-
-{% endblock %}
-
 {% block content %}
-  <div class="container py-4">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-      <h2 class="fw-bold mb-0">Kết quả tìm kiếm cho: "{{ query }}"</h2>
-      <span class="text-muted small">{{ products|length }} sản phẩm</span>
-    </div>
-    <div class="row g-3 g-md-4">
-      {% for product in products %}
-        <div class="col-6 col-md-4 col-lg-3">
-          {% include 'partials/product_cart.html' %}
-        </div>
-      {% empty %}
-        <div class="col-12 text-center py-5">
-          <p class="text-muted mb-0">Không tìm thấy sản phẩm nào phù hợp.</p>
-        </div>
-      {% endfor %}
-    </div>
+  <div id="search-results">
+    {% include 'partials/search_results.html' %}
   </div>
 {% endblock %}

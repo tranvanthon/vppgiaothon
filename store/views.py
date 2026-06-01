@@ -613,12 +613,16 @@ def search(request):
             rank = product_matches_search(product, normalized_query)
             if rank is not None:
                 matched_products.append((rank, product.name.casefold(), product))
+                
 
         products = [
             product
             for _, _, product in sorted(matched_products, key=lambda item: item[:2])
         ]
-    return render(request, "core/search.html", {"products": products, "query": query})
+    context = {"products": products, "query": query}
+    if request.headers.get("HX-Request"):
+        return render(request, "partials/search_results.html", context)
+    return render(request, "core/search.html", context)
 
 
 class ProductDetailView(DetailView):

@@ -1,0 +1,13 @@
+<div class="row g-3 g-md-4">
+  {% for product in products %}
+    <div class="col-6 col-md-4 col-lg-3">
+      {% include 'partials/product_cart.html' %}
+    </div>
+  {% empty %}
+    <div class="col-12 text-center py-5">
+      <p class="text-muted mb-0">
+        Không tìm thấy sản phẩm nào phù hợp.
+      </p>
+    </div>
+  {% endfor %}
+</div>
