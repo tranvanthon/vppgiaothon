@@ -116,7 +116,7 @@
 
       <div class="d-none d-lg-flex align-items-center gap-3">
         <form class="position-relative" role="search" action="{% url 'store:search' %}" method="get">
-          <input class="form-control rounded-pill pe-5" type="search" name="query" placeholder="Tìm sản phẩm..." hx-get="{% url 'store:search' %}" hx-trigger="keyup changed delay:500ms" hx-target="#search-results" hx-swap="innerHTML" />
+          <input class="form-control rounded-pill pe-5" type="search" name="query" placeholder="Tìm sản phẩm..." hx-get="{% url 'store:search' %}" hx-trigger="keyup changed delay:500ms" hx-target="#navbar-search-results" hx-swap="innerHTML" />
           <button class="btn position-absolute end-0 top-0 text-primary" type="submit"><i class="bi bi-search"></i></button>
         </form>
 
@@ -177,12 +177,12 @@
     </div>
   </div>
   <div class="search-mobile-container d-lg-none" id="searchMobileBox">
-    <<form class="position-relative" role="search">
-      <input class="form-control rounded-pill pe-5" type="search" name="query" placeholder="Tìm sản phẩm..." hx-get="{% url 'store:search' %}" hx-trigger="keyup changed delay:500ms" hx-target="#search-results" hx-swap="innerHTML" />
+    <form class="position-relative" role="search" action="{% url 'store:search' %}" method="get">
+      <input class="form-control rounded-pill pe-5" type="search" name="query" placeholder="Tìm sản phẩm..." hx-get="{% url 'store:search' %}" hx-trigger="keyup changed delay:500ms" hx-target="#navbar-search-results" hx-swap="innerHTML" />
       <button class="btn position-absolute end-0 top-0 text-primary" type="submit"><i class="bi bi-search"></i></button>
     </form>
   </div>
 </nav>
-<div class="search-wrapper container">
-  <div id="search-results"></div>
+<div class="search-wrapper container" aria-live="polite">
+  <div id="navbar-search-results"></div>
 </div>

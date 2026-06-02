@@ -2,7 +2,7 @@ from django.contrib import messages
 from django.contrib.auth import get_user_model
 from django.shortcuts import get_object_or_404, redirect, render
 from django.contrib.auth.decorators import login_required
-from django.http import HttpResponseRedirect, JsonResponse
+from django.http import HttpResponse, HttpResponseRedirect, JsonResponse
 from django.views.generic import (
     DeleteView,
     DetailView,
@@ -600,6 +600,9 @@ def product_matches_search(product, normalized_query):
 
 def search(request):
     query = request.GET.get("query", "").strip()
+    if request.headers.get("HX-Request") and not query:
+        return HttpResponse("")
+
     products = (
         Product.active.filter(is_sold=False)
         .select_related("brand", "category")
@@ -613,7 +616,6 @@ def search(request):
             rank = product_matches_search(product, normalized_query)
             if rank is not None:
                 matched_products.append((rank, product.name.casefold(), product))
-                
 
         products = [
             product

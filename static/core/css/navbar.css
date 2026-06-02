@@ -369,11 +369,12 @@
 /* search */
 .search-wrapper {
     position: relative;
+    z-index: 1040;
 }
 
-#search-results {
-    position: fixed;
-    top: 100%;
+#navbar-search-results {
+    position: absolute;
+    top: 0;
     left: 0;
     width: 100%;
 
@@ -382,4 +383,8 @@
 
     border-radius: 10px;
     box-shadow: 0 5px 20px rgba(0, 0, 0, .15);
+}
+
+#navbar-search-results:empty {
+    display: none;
 }
