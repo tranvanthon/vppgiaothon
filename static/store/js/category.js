@@ -1,15 +1,23 @@
-function updatePrice(val) {
-  // Định dạng số có dấu chấm ngăn cách hàng nghìn
-  const formattedPrice = new Intl.NumberFormat("vi-VN").format(val);
-  document.getElementById("priceValue").innerText = formattedPrice;
-
-  // Hiệu ứng đổi màu khi kéo cực đại
-  const label = document.getElementById("priceValue");
-  if (val > 40000000) label.style.color = "#dc3545";
-  else label.style.color = "#278aae";
-}
-
 // Gọi hàm lần đầu để hiển thị giá trị mặc định
 document.addEventListener("DOMContentLoaded", function () {
-  updatePrice(document.getElementById("rangeInput").value);
+  const rangeInput = document.getElementById("rangeInput");
+
+  if (rangeInput) {
+    updatePrice(rangeInput.value);
+  }
 });
+function updatePrice(val) {
+  const priceValue = document.getElementById("priceValue");
+
+  const rangeInput = document.getElementById("rangeInput");
+
+  const percent = (Number(val) / Number(rangeInput.max)) * 100;
+
+  console.log("val =", val);
+  console.log("max =", rangeInput.max);
+  console.log("percent =", percent);
+
+  priceValue.textContent = new Intl.NumberFormat("vi-VN").format(val);
+
+  priceValue.style.color = percent > 80 ? "#dc3545" : "#278aae";
+}

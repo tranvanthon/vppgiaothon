@@ -12,7 +12,7 @@ from django.views.generic import (
     View,
 )
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.db.models import Count, DecimalField, ExpressionWrapper, F, Q, Sum
+from django.db.models import Count, DecimalField, ExpressionWrapper, F, Q, Sum, Min, Max
 from django.urls import reverse_lazy, reverse
 from django.core.paginator import Paginator
 from django.contrib.messages.views import SuccessMessageMixin
@@ -461,11 +461,18 @@ def cart_detail(request):
 
 
 def add_to_cart(request, slug):
+    print("HTMX REQUEST")
     product = get_object_or_404(Product, slug=slug)
     order = get_or_create_cart(request)
-    # if order is None:
-    #     return redirect("account_login")
     order.add_product(product, quantity=1)
+
+    if request.headers.get("HX-Request"):
+
+        cart_items_count = sum(item.quantity for item in order.items.all())
+        return render(
+            request, "partials/cart_count.html", {"cart_items_count": cart_items_count}
+        )
+
     return redirect(request.META.get("HTTP_REFERER", "/"))
 
 
@@ -831,6 +838,10 @@ class CategoryDetailView(DetailView):
         paginator = Paginator(products, 12)
         page_obj = paginator.get_page(self.request.GET.get("page"))
 
+        price_range = category.get_products_queryset().aggregate(
+            min_price=Min("price"),
+            max_price=Max("price"),
+        )
         context.update(
             {
                 "breadcrumb": get_breadcrumb(category=category),
@@ -844,6 +855,8 @@ class CategoryDetailView(DetailView):
                     parent__isnull=True
                 ).prefetch_related("children"),
                 "custom_breadcrumb": getattr(self.request, "custom_breadcrumb", {}),
+                "min_category_price": price_range["min_price"] or 0,
+                "max_category_price": price_range["max_price"] or 0,
             }
         )
         return context

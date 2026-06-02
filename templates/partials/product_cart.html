@@ -40,7 +40,7 @@
         {% endif %}
       </div>
       {% if product.is_in_stock %}
-        <a href="{% url 'store:add_to_cart' product.slug %}" class="btn btn-sm btn-primary rounded-pill px-3">Mua</a>
+        <a hx-get="{% url 'store:add_to_cart' product.slug %}" hx-target='#cart-count' hx-swap="outerHTML" class="btn btn-sm btn-primary rounded-pill px-3">Mua</a>
       {% else %}
         <button class="btn btn-sm btn-outline-secondary rounded-pill px-3" type="button" disabled>Hết</button>
       {% endif %}

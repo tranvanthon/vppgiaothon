@@ -121,7 +121,7 @@
         </form>
 
         <div class="nav-action-dropdown">
-          <a href="#" class="text-primary position-relative p-2"><i class="bi bi-cart3 fs-4"></i><span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">{{ cart_items_count }}</span></a>
+          <a href="#" class="text-primary position-relative p-2"><i class="bi bi-cart3 fs-4"></i><span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" id="cart-count">{{ cart_items_count }}</span></a>
           <div class="dropdown-content">
             <h6 class="fw-bold mb-3">Giỏ hàng của bạn ({{ cart_items_count }})</h6>
             {% for item in cart_items %}
