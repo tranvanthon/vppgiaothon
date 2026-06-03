@@ -438,8 +438,24 @@ def remove_from_cart(request, item_id):
     )
 
     item.delete()
+    if request.headers.get("HX-Request"):
+        cart_items_count = sum(item.quantity for item in order.items.all())
+        cart_items = list(order.items.all())
+        return render(
+            request,
+            "partials/cart_count.html",
+            {
+                "cart_items_count": cart_items_count,
+                "cart_items": cart_items,
+            },
+        )
 
-    return redirect("store:cart_detail")
+    return redirect(
+        request.META.get(
+            "HTTP_REFERER",
+            "/",
+        )
+    )
 
 
 # Cart detail
@@ -461,16 +477,20 @@ def cart_detail(request):
 
 
 def add_to_cart(request, slug):
-    print("HTMX REQUEST")
     product = get_object_or_404(Product, slug=slug)
     order = get_or_create_cart(request)
     order.add_product(product, quantity=1)
 
     if request.headers.get("HX-Request"):
-
+        cart_items = list(order.items.all())
         cart_items_count = sum(item.quantity for item in order.items.all())
         return render(
-            request, "partials/cart_count.html", {"cart_items_count": cart_items_count}
+            request,
+            "partials/cart_update.html",
+            {
+                "cart_items_count": cart_items_count,
+                "cart_item": cart_items,
+            },
         )
 
     return redirect(request.META.get("HTTP_REFERER", "/"))

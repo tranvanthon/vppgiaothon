@@ -1,0 +1,10 @@
+{% include 'partials/cart_count.html' %}
+
+<div id="cart-dropdown" hx-swap-oob="true" class="dropdown-content">
+  {% include 'partials/cart_dropdown.html' %}
+</div>
+<span id="cart-count-mobile" hx-swap-oob="true" class="position-absolute badge rounded-pill bg-danger js-cart-count">{{ cart_items_count }}</span>
+
+<div class="dropdown-content" id="cart-dropdown-mobile" hx-swap-oob="true">
+  {% include 'partials/cart_dropdown_mobile.html' %}
+</div>

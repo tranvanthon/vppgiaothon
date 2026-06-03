@@ -1,0 +1,29 @@
+{% load image_tags %}
+{% if request.user.is_authenticated %}
+  <a class="me-3 text-primary nav-link" href="#">
+    <img class="rounded-circle object-fit-cover" src="{{ user|get_avatar_url:'50,50' }}?v={{ user.profile.updated_at|date:'U' }}" alt="{{ user.get_short_name }}" width="50" height="50" />
+    <small class>Xin chào {{ user.get_short_name }}</small>
+  </a>
+  <div class="dropdown-content" style="width: 300px">
+    <a href="{% url 'profile' %}" class="account-link"><i class="bi bi-person-bounding-box"></i> Hồ sơ</a>
+    <a href="{% url 'password_change' %}" class="account-link"><i class="bi bi-arrow-repeat"></i> Thay đổi mật khẩu</a>
+    <a href="{% if request.user.role == 'admin' %}
+        {% url 'store:admin_dashboard' %}
+      {% elif request.user.is_staff_role %}
+        {% url 'store:staff_dashboard' %}
+      {% else %}
+        {% url 'store:customer_dashboard' %}
+      {% endif %}"
+      class="account-link">
+      <i class="bi bi-gear"></i> Quản lý hệ thống
+    </a>
+    <hr class="my-1" />
+    <a href="{% url 'account_logout' %}" class="account-link text-danger"><i class="bi bi-box-arrow-right"></i> Đăng xuất</a>
+  </div>
+{% else %}
+  <a href="#" class="text-dark p-2"><i class="bi bi-person fs-4"></i></a>
+  <div class="dropdown-content" style="min-width: 200px">
+    <a class="me-3 text-primary nav-link" href="{% url 'account_login' %}"><i class="bi bi-shield-lock-fill fs-6"></i> Đăng nhập</a>
+    <a class="text-primary nav-link" href="{% url 'account_signup' %}"><i class="bi bi-person-plus-fill fs-6"></i> Đăng ký</a>
+  </div>
+{% endif %}

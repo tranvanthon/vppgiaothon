@@ -1,8 +1,7 @@
 {% load static %}
 {% load image_tags %}
 {% load format_filter %}
-<div class="py-2 bg-info text-white text-center small">Chào mừng bạn đến với E-STORE! Miễn phí vận chuyển cho đơn hàng từ 500k.</div>
-
+<div class="py-2 bg-info text-white text-center small">Chào mừng bạn đến với GT-STORE! Miễn phí vận chuyển cho đơn hàng từ 500k.</div>
 <nav class="navbar navbar-expand-lg navbar-light bg-white sticky-top">
   <div class="container">
     <a class="navbar-brand fw-bold text-primary fs-3" href="/"><i class="bi bi-shop-window me-2"></i>E-STORE</a>
@@ -13,9 +12,9 @@
       <div class="nav-action-dropdown">
         <a href="#" class="p-2 d-flex align-items-center position-relative text-dark">
           <i class="bi bi-cart3 fs-4"></i>
-          <span class="position-absolute badge rounded-pill bg-danger">{{ cart_items_count }}</span>
+          <span class="position-absolute badge rounded-pill bg-danger js-cart-count" id="cart-count-mobile">{{ cart_items_count }}</span>
         </a>
-        <div class="dropdown-content">
+        <div class="dropdown-content" id="cart-dropdown-mobile">
           <h6 class="fw-bold mb-3 small">Giỏ hàng ({{ cart_items_count }})</h6>
           {% for item in cart_items %}
             <div class="cart-item-mini">
@@ -33,34 +32,7 @@
       </div>
 
       <div class="nav-action-dropdown">
-        {% if request.user.is_authenticated %}
-          <a class="me-3 text-primary nav-link" href="#">
-            <img class="rounded-circle object-fit-cover" src="{{ user|get_avatar_url:'50,50' }}?v={{ user.profile.updated_at|date:'U' }}" alt="{{ user.get_short_name }}" width="50" height="50" />
-            <small class>Xin chào {{ user.get_short_name }}</small>
-          </a>
-          <div class="dropdown-content" style="width: 300px">
-            <a href="{% url 'profile' %}" class="account-link"><i class="bi bi-person-bounding-box"></i> Hồ sơ</a>
-            <a href="{% url 'password_change' %}" class="account-link"><i class="bi bi-arrow-repeat"></i> Thay đổi mật khẩu</a>
-            <a href="{% if request.user.role == 'admin' %}
-                {% url 'store:admin_dashboard' %}
-              {% elif request.user.is_staff_role %}
-                {% url 'store:staff_dashboard' %}
-              {% else %}
-                {% url 'store:customer_dashboard' %}
-              {% endif %}"
-              class="account-link">
-              <i class="bi bi-gear"></i> Quản lý hệ thống
-            </a>
-            <hr class="my-1" />
-            <a href="{% url 'account_logout' %}" class="account-link text-danger"><i class="bi bi-box-arrow-right"></i> Đăng xuất</a>
-          </div>
-        {% else %}
-          <a href="#" class="text-dark p-2"><i class="bi bi-person fs-4"></i></a>
-          <div class="dropdown-content" style="min-width: 200px">
-            <a class="me-3 text-primary nav-link" href="{% url 'account_login' %}"><i class="bi bi-shield-lock-fill fs-6"></i> Đăng nhập</a>
-            <a class="text-primary nav-link" href="{% url 'account_signup' %}"><i class="bi bi-person-plus-fill fs-6"></i> Đăng ký</a>
-          </div>
-        {% endif %}
+        {% include 'partials/profile_dropdown.html' %}
       </div>
     </div>
 
@@ -114,7 +86,7 @@
         </li>
       </ul>
 
-      <div class="d-none d-lg-flex align-items-center gap-3">
+      <div class="d-flex align-items-center gap-3">
         <form class="position-relative" role="search" action="{% url 'store:search' %}" method="get">
           <input class="form-control rounded-pill pe-5" type="search" name="query" placeholder="Tìm sản phẩm..." hx-get="{% url 'store:search' %}" hx-trigger="keyup changed delay:500ms" hx-target="#navbar-search-results" hx-swap="innerHTML" />
           <button class="btn position-absolute end-0 top-0 text-primary" type="submit"><i class="bi bi-search"></i></button>
@@ -122,56 +94,13 @@
 
         <div class="nav-action-dropdown">
           <a href="#" class="text-primary position-relative p-2"><i class="bi bi-cart3 fs-4"></i><span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" id="cart-count">{{ cart_items_count }}</span></a>
-          <div class="dropdown-content">
-            <h6 class="fw-bold mb-3">Giỏ hàng của bạn ({{ cart_items_count }})</h6>
-            {% for item in cart_items %}
-              <div class="cart-item-mini">
-                <img src="{{ item.product.main_image_url }}" alt="{{ item.product.name }}" />
-                <p class="mb-0 fw-bold small">{{ item.product.name }}</p>
-                <p class="mb-0 text-primary small">{{ item.quantity }} x {{ item.price|dot_thousands }}đ</p>
-                <form action="{% url 'store:remove_from_cart' item.pk %}" method="post" class="ms-auto">
-                  {% csrf_token %}
-                  <button type="submit" class="btn btn-outline-danger btn-sm" title="Xoá khỏi giỏ hàng"><i class="bi bi-bag-x-fill"></i></button>
-                </form>
-              </div>
-            {% empty %}
-              <p class="text-muted small mb-3">Giỏ hàng đang trống.</p>
-            {% endfor %}
-            <div class="d-grid gap-2">
-              <a href="{% url 'store:cart_detail' %}" class="btn btn-primary btn-sm">Xem giỏ hàng</a>
-            </div>
+          <div class="dropdown-content" id="cart-dropdown">
+            {% include 'partials/cart_dropdown.html' %}
           </div>
         </div>
 
         <div class="nav-action-dropdown">
-          {% if request.user.is_authenticated %}
-            <a class="me-3 text-primary nav-link" href="#">
-              <img class="rounded-circle object-fit-cover" src="{{ user|get_avatar_url:'50,50' }}?v={{ user.profile.updated_at|date:'U' }}" alt="{{ user.get_short_name }}" width="50" height="50" />
-              <small class>Xin chào {{ user.get_short_name }}</small>
-            </a>
-            <div class="dropdown-content" style="width: 300px">
-              <a href="{% url 'profile' %}" class="account-link"><i class="bi bi-person-bounding-box"></i> Hồ sơ</a>
-              <a href="{% url 'password_change' %}" class="account-link"><i class="bi bi-arrow-repeat"></i> Thay đổi mật khẩu</a>
-              <a href="{% if request.user.role == 'admin' %}
-                  {% url 'store:admin_dashboard' %}
-                {% elif request.user.is_staff_role %}
-                  {% url 'store:staff_dashboard' %}
-                {% else %}
-                  {% url 'store:customer_dashboard' %}
-                {% endif %}"
-                class="account-link">
-                <i class="bi bi-gear"></i> Quản lý hệ thống
-              </a>
-              <hr class="my-1" />
-              <a href="{% url 'account_logout' %}" class="account-link text-danger"><i class="bi bi-box-arrow-right"></i> Đăng xuất</a>
-            </div>
-          {% else %}
-            <a href="#" class="text-dark p-2"><i class="bi bi-person fs-4"></i></a>
-            <div class="dropdown-content" style="min-width: 200px">
-              <a class="me-3 text-primary nav-link" href="{% url 'account_login' %}"><i class="bi bi-shield-lock-fill fs-6"></i> Đăng nhập</a>
-              <a class="text-primary nav-link" href="{% url 'account_signup' %}"><i class="bi bi-person-plus-fill fs-6"></i> Đăng ký</a>
-            </div>
-          {% endif %}
+          {% include 'partials/profile_dropdown.html' %}
         </div>
       </div>
     </div>

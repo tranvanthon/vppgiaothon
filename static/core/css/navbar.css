@@ -286,6 +286,10 @@
     overflow: visible !important;
 }
 
+.cart-global {
+    display: block;
+}
+
 /* Mobile Optimization */
 @media (max-width: 991.98px) {
 
@@ -295,6 +299,11 @@
         visibility: hidden;
         opacity: 0;
         transform: none;
+    }
+
+    .cart-global {
+        order: 2;
+        margin-left: auto;
     }
 
     /* Show Dropdown khi click trên Mobile - cần JS để toggle class 'show' */

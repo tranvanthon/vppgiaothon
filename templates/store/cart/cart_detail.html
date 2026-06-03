@@ -72,7 +72,7 @@
         <div class="row g-4">
           <div class="col-lg-8">
             {% for item in cart_items %}
-              <div class="item-card d-flex align-items-center shadow-sm">
+              <div class="cart-item item-card d-flex align-items-center shadow-sm">
                 <img src="{{ item.product.main_image_url }}" class="item-img" alt="{{ item.product.name }}" />
                 <div class="ms-3 flex-grow-1">
                   <h6 class="fw-bold mb-1">{{ item.product.name }}</h6>
@@ -91,7 +91,7 @@
                 <div style="min-width: 80px;">
                   <span class="fw-bold text-primary mx-4 text-start">{{ item.subtotal|dot_thousands }}đ</span>
                 </div>
-                <form action="{% url 'store:remove_from_cart' item.id %}" method="post">
+                <form hx-post="{% url 'store:remove_from_cart' item.id %}" hx-target="closest .cart-item" hx-swap="outerHTML">
                   {% csrf_token %}
                   <button type="submit" class="btn btn-outline-danger btn-sm border-0" title="Xoá khỏi giỏ hàng"><i class="bi bi-bag-x-fill"></i></button>
                 </form>

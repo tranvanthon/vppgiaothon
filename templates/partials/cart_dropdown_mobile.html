@@ -1,0 +1,17 @@
+{% load format_filter %}
+
+<h6 id="cart-title-mobile" hx-swap-oob="true" class="fw-bold mb-3 small">Giỏ hàng ({{ cart_items_count }})</h6>
+
+{% for item in cart_items %}
+  <div class="cart-item-mini">
+    <img src="{{ item.product.main_image_url }}" alt="{{ item.product.name }}" />
+    <div>
+      <p class="mb-0 fw-bold small">{{ item.product.name }}</p>
+      <p class="mb-0 text-primary small">{{ item.quantity }} x {{ item.price|dot_thousands }}đ</p>
+    </div>
+  </div>
+{% empty %}
+  <p class="text-muted small mb-3">Giỏ hàng đang trống.</p>
+{% endfor %}
+
+<a href="#" class="btn btn-primary btn-sm w-100">Thanh toán</a>
