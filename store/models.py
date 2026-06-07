@@ -1,22 +1,24 @@
 from decimal import Decimal
+
+from django.conf import settings
+from django.core.exceptions import ValidationError
+from django.core.validators import MinValueValidator
 from django.db import models
 from django.db.models import Q, Sum
 from django.urls import reverse
-from django.core.exceptions import ValidationError
-from django.core.validators import MinValueValidator
-from django.conf import settings
+from django.utils import timezone
 from mptt.models import MPTTModel, TreeForeignKey
 from PIL import Image
-from tools.slug import generate_unique_slug
-from core.images.mixins import ImageOptimizationsMixin
 
+from core.images.mixins import ImageOptimizationsMixin
 from core.images.paths import (
     original_upload_path,
 )
-from django.utils import timezone
+from tools.slug import generate_unique_slug
 
 
 class ActiveManager(models.Manager):
+
     def get_queryset(self):
         return super().get_queryset().filter(is_active=True)
 

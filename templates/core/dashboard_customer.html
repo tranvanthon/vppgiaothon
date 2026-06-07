@@ -1,343 +1,514 @@
-{% extends 'base.html' %}
-
-{% block navbar %}
-  {% include 'partials/navbar.html' %}
-{% endblock %}
-
-{% block content %}
-  <div class="sidebar shadow-sm">
-    <div class="p-4 mb-3">
-      <div class="col-md-3 text-center text-md-start">
-        <div class="avatar-wrapper">
-          <img src="{{ user.profile.display_avatar }}" alt="Avatar" class="avatar-img" id="avatarPreview" />
-          <label for="avatarUpload" class="avatar-upload-btn"><i class="bi bi-camera-fill"></i></label>
-          <input type="file" id="avatarUpload" name="avatar" accept="image/*" hidden data-upload-url="{% url 'upload_avatar' %}" />
-          <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}" />
-        </div>
-      </div>
-    </div>
-    <div class="nav flex-column">
-      <div class="nav-link" onclick="showPage('overview', this)">
-        <i class="bi bi-speedometer2"></i> Tổng quan
-      </div>
-      <div class="nav-link" onclick="showPage('order-history', this)">
-        <i class="bi bi-receipt"></i> Lịch sử đơn hàng
-      </div>
-      <div class="nav-link" onclick="showPage('wishlist', this)">
-        <i class="bi bi-heart"></i> Sản phẩm yêu thích
-      </div>
-      <div class="nav-link" onclick="showPage('account-info', this)">
-        <i class="bi bi-person-gear"></i> Thông tin tài khoản
-      </div>
-      <div class="nav-link" onclick="showPage('address-book', this)">
-        <i class="bi bi-geo-alt"></i> Sổ địa chỉ
+{% extends 'base.html' %} {% load format_filter %} {% block navbar %} {% include
+'partials/navbar.html' %} {% endblock %} {% block content %}
+<div class="sidebar shadow-sm">
+  <div class="p-4 mb-3">
+    <div class="col-md-3 text-center text-md-start">
+      <div class="avatar-wrapper">
+        <img
+          src="{{ user.profile.display_avatar }}"
+          alt="Avatar"
+          class="avatar-img"
+          id="avatarPreview"
+        />
+        <label for="avatarUpload" class="avatar-upload-btn"
+          ><i class="bi bi-camera-fill"></i
+        ></label>
+        <input
+          type="file"
+          id="avatarUpload"
+          name="avatar"
+          accept="image/*"
+          hidden
+          data-upload-url="{% url 'upload_avatar' %}"
+        />
+        <input
+          type="hidden"
+          name="csrfmiddlewaretoken"
+          value="{{ csrf_token }}"
+        />
       </div>
     </div>
   </div>
+  <div class="nav flex-column">
+    <div class="nav-link" onclick="showPage('overview', this)">
+      <i class="bi bi-speedometer2"></i> Tổng quan
+    </div>
+    <div class="nav-link" onclick="showPage('order-history', this)">
+      <i class="bi bi-receipt"></i> Lịch sử đơn hàng
+    </div>
+    <div class="nav-link" onclick="showPage('wishlist', this)">
+      <i class="bi bi-heart"></i> Sản phẩm yêu thích
+    </div>
+    <div class="nav-link" onclick="showPage('account-info', this)">
+      <i class="bi bi-person-gear"></i> Thông tin tài khoản
+    </div>
+    <div class="nav-link" onclick="showPage('address-book', this)">
+      <i class="bi bi-geo-alt"></i> Sổ địa chỉ
+    </div>
+  </div>
+</div>
 
-  <div class="main-content">
-    <!-- Overview -->
-    <section id="overview" class="page-content active">
-      <h3 class="fw-bold mb-4">Xin chào, {{ user.get_full_name }}!</h3>
-      <div class="row g-4 mb-4">
-        <div class="col-md-4">
-          <div class="card p-4 bg-white shadow-sm">
-            <h6 class="text-muted">Tổng chi tiêu</h6>
-            <h2 class="fw-bold text-primary">8.250.000đ</h2>
-            <small class="text-success"><i class="bi bi-arrow-up"></i> +12% so với tháng trước</small>
-          </div>
-        </div>
-        <div class="col-md-4">
-          <div class="card p-4 bg-white shadow-sm">
-            <h6 class="text-muted">Đơn hàng đã đặt</h6>
-            <h2 class="fw-bold text-dark">12</h2>
-            <small class="text-muted">3 đơn hàng đang giao</small>
-          </div>
-        </div>
-        <div class="col-md-4">
-          <div class="card p-4 bg-white shadow-sm">
-            <h6 class="text-muted">Điểm thưởng</h6>
-            <h2 class="fw-bold text-warning">1,250</h2>
-            <small class="text-muted">Tương đương 125.000đ</small>
-          </div>
+<div class="main-content">
+  <!-- Overview -->
+  <section id="overview" class="page-content active">
+    <h3 class="fw-bold mb-4">Xin chào, {{ user.get_full_name }}!</h3>
+    <div class="row g-4 mb-4">
+      <div class="col-md-4">
+        <div class="card p-4 bg-white shadow-sm">
+          <h6 class="text-muted">Tổng chi tiêu</h6>
+          <h2 class="fw-bold text-primary">{{total_spent|dot_thousands}}đ</h2>
+          <small class="text-success"
+            ><i class="bi bi-arrow-up"></i> +12% so với tháng trước</small
+          >
         </div>
       </div>
-    </section>
-
-    <!-- Order History -->
-    <section id="order-history" class="page-content">
-      <h3 class="fw-bold mb-4">Lịch sử đơn hàng</h3>
-      <div class="card shadow-sm border-0">
-        <div class="table-responsive p-3">
-          <table class="table align-middle">
-            <thead>
-              <tr class="text-muted small">
-                <th>MÃ ĐƠN</th>
-                <th>NGÀY ĐẶT</th>
-                <th>SẢN PHẨM</th>
-                <th>TỔNG TIỀN</th>
-                <th>TRẠNG THÁI</th>
-                <th>THAO TÁC</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td>
-                  <span class="fw-bold">#ORD-9921</span>
-                </td>
-                <td>12/04/2026</td>
-                <td>Tai nghe Bluetooth x1</td>
-                <td>1.250.000đ</td>
-                <td>
-                  <span class="badge bg-warning-subtle text-warning">Đang giao</span>
-                </td>
-                <td>
-                  <button class="btn btn-sm btn-outline-primary">Theo dõi</button>
-                </td>
-              </tr>
-              <tr>
-                <td>
-                  <span class="fw-bold">#ORD-9812</span>
-                </td>
-                <td>05/03/2026</td>
-                <td>Đồng hồ SmartWatch x1</td>
-                <td>2.450.000đ</td>
-                <td>
-                  <span class="badge bg-success-subtle text-success">Đã giao</span>
-                </td>
-                <td>
-                  <button class="btn btn-sm btn-outline-secondary">Mua lại</button>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
-    </section>
-
-    <!-- Wishlist -->
-    <section id="wishlist" class="page-content">
-      <h3 class="fw-bold mb-4">Sản phẩm yêu thích</h3>
-      <div class="row g-4">
-        <div class="col-md-3">
-          <div class="card p-3 h-100">
-            <img src="https://images.unsplash.com/photo-1523275335684-37898b6baf30?auto=format&fit=crop&w=300" class="product-img mb-3" alt="Product" />
-            <h6 class="fw-bold">Đồng hồ SmartWatch</h6>
-            <p class="text-muted small">Thương hiệu: Samsung</p>
-            <div class="d-flex justify-content-between align-items-center mt-2">
-              <span class="fw-bold text-primary">2.450.000đ</span>
-              <button class="btn btn-sm btn-primary rounded-pill">Thêm giỏ</button>
-            </div>
-          </div>
+      <div class="col-md-4">
+        <div class="card p-4 bg-white shadow-sm">
+          <h6 class="text-muted">Đơn hàng đã đặt</h6>
+          <h2 class="fw-bold text-dark">{{ orders_count }}</h2>
+          <small class="text-muted"
+            >{{ order.items_count }} đơn hàng đang giao</small
+          >
         </div>
         <div class="col-md-3">
-          <div class="card p-3 h-100">
-            <img src="https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=300" class="product-img mb-3" alt="Product" />
-            <h6 class="fw-bold">Tai nghe Bluetooth</h6>
-            <p class="text-muted small">Thương hiệu: Sony</p>
-            <div class="d-flex justify-content-between align-items-center mt-2">
-              <span class="fw-bold text-primary">1.200.000đ</span>
-              <button class="btn btn-sm btn-primary rounded-pill">Thêm giỏ</button>
-            </div>
-          </div>
+          
         </div>
       </div>
-    </section>
+      <div class="col-md-4">
+        <div class="card p-4 bg-white shadow-sm">
+          <h6 class="text-muted">Điểm thưởng</h6>
+          <h2 class="fw-bold text-warning">{{ shipping_count }}</h2>
+          <small class="text-muted">Tương đương 125.000đ</small>
+        </div>
+      </div>
+    </div>
+  </section>
 
-    <!-- Account Info -->
-    <section id="account-info" class="page-content">
-        <h4 class="mb-2">
-        <i class="bi bi-person-circle me-2" style="color: var(--bs-primary);"></i>
-        Thông tin cá nhân
-        </h4>
-      <div class="card p-4 shadow-sm">
-        <div class="container profile-container">
-    <div class="profile-card">
-  
-        
-        <div class="info-section">
-            <div class="d-flex justify-content-between align-items-center mb-4">
-
-                <button class="btn edit-btn text-white" data-bs-toggle="modal" data-bs-target="#editProfileModal">
-                    <i class="bi bi-pencil-square me-2"></i>Chỉnh sửa hồ sơ
+  <!-- Order History -->
+  <section id="order-history" class="page-content">
+    <h3 class="fw-bold mb-4">Lịch sử đơn hàng</h3>
+    <div class="card shadow-sm border-0">
+      <div class="table-responsive p-3">
+        <table class="table align-middle">
+          <thead>
+            <tr class="text-muted small">
+              <th>MÃ ĐƠN</th>
+              <th>NGÀY ĐẶT</th>
+              <th>SẢN PHẨM</th>
+              <th>TỔNG TIỀN</th>
+              <th>TRẠNG THÁI</th>
+              <th>THAO TÁC</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for order in user_orders %}
+            <tr>
+              <td>
+                <span class="fw-bold">{{ order.order_number }}</span>
+              </td>
+              <td>{{ order.created_at|date:"d/m/Y" }}</td>
+              <td>Tai nghe Bluetooth x{{ order.items_count }}</td>
+              <td>{{ order.total_amount|dot_thousands }}đ</td>
+              <td>
+                <span class="badge bg-warning-subtle text-warning"
+                  >{{ order.status_display }}</span
+                >
+              </td>
+              <td>
+                <a
+                  href="{% url 'store:order_tracking' order.id %}"
+                  class="btn btn-sm btn-outline-primary"
+                >
+                  Theo dõi
+                </a>
+              </td>
+            </tr>
+            <tr>
+              <td>
+                <span class="fw-bold">#ORD-9812</span>
+              </td>
+              <td>05/03/2026</td>
+              <td>Đồng hồ SmartWatch x1</td>
+              <td>2.450.000đ</td>
+              <td>
+                <span class="badge bg-success-subtle text-success"
+                  >Đã giao</span
+                >
+              </td>
+              <td>
+                <button class="btn btn-sm btn-outline-secondary">
+                  Mua lại
                 </button>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- Wishlist -->
+  <section id="wishlist" class="page-content">
+    {% if wishlist %}
+    <h3 class="fw-bold mb-4">Sản phẩm yêu thích</h3>
+    <div class="row g-4">
+      <div class="col-md-3">
+        <div class="card p-3 h-100">
+          <img
+            src="https://images.unsplash.com/photo-1523275335684-37898b6baf30?auto=format&fit=crop&w=300"
+            class="product-img mb-3"
+            alt="Product"
+          />
+          <h6 class="fw-bold">Đồng hồ SmartWatch</h6>
+          <p class="text-muted small">Thương hiệu: Samsung</p>
+          <div class="d-flex justify-content-between align-items-center mt-2">
+            <span class="fw-bold text-primary">2.450.000đ</span>
+            <button class="btn btn-sm btn-primary rounded-pill">
+              Thêm giỏ
+            </button>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-3">
+        <div class="card p-3 h-100">
+          <img
+            src="https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=300"
+            class="product-img mb-3"
+            alt="Product"
+          />
+          <h6 class="fw-bold">Tai nghe Bluetooth</h6>
+          <p class="text-muted small">Thương hiệu: Sony</p>
+          <div class="d-flex justify-content-between align-items-center mt-2">
+            <span class="fw-bold text-primary">1.200.000đ</span>
+            <button class="btn btn-sm btn-primary rounded-pill">
+              Thêm giỏ
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+    {% else %} Tính năng đang phát triển {% endif %}
+  </section>
+
+  <!-- Account Info -->
+  <section id="account-info" class="page-content">
+    <h4 class="mb-2">
+      <i class="bi bi-person-circle me-2" style="color: var(--bs-primary)"></i>
+      Thông tin cá nhân
+    </h4>
+    <div class="card p-4 shadow-sm">
+      <div class="container profile-container">
+        <div class="profile-card">
+          <div class="info-section">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+              <button
+                class="btn edit-btn text-white"
+                data-bs-toggle="modal"
+                data-bs-target="#editProfileModal"
+              >
+                <i class="bi bi-pencil-square me-2"></i>Chỉnh sửa hồ sơ
+              </button>
             </div>
-            
+
             <div class="row g-4">
-                <div class="col-md-6">
-                    <div class="info-card">
-                        <div class="d-flex align-items-center">
-                            <i class="me-3 bi bi-card-heading me-3"></i>
-                            <div class="info-label">Thông tin cơ bản</div>
-                        </div>
-                        <div class="info-value mt-2">
-                            <strong><i class="bi bi-file-person-fill"></i> Họ tên:</strong> {{ user.name|default:"Chưa cập nhật" }}<br>
-                            <strong><i class="bi bi-envelope-fill me-2"></i> Email:</strong> {{ user.email }}<br>
-                            <strong><i class="bi bi-person-badge me-1"></i> Vai trò:</strong> {{ user.get_role_display }}<br>
-                            <strong><i class="bi bi-calendar3 me-1"></i> Tham gia:</strong>{{ user.date_joined|date:"d/m/Y" }}
-                        </div>
-                    </div>
+              <div class="col-md-6">
+                <div class="info-card">
+                  <div class="d-flex align-items-center">
+                    <i class="me-3 bi bi-card-heading"></i>
+                    <div class="info-label">Thông tin cơ bản</div>
+                  </div>
+                  <div class="info-value mt-2">
+                    <strong
+                      ><i class="bi bi-file-person-fill"></i> Họ tên:</strong
+                    >
+                    {{ user.name|default:"Chưa cập nhật" }}<br />
+                    <strong
+                      ><i class="bi bi-envelope-fill me-2"></i> Email:</strong
+                    >
+                    {{ user.email }}<br />
+                    <strong
+                      ><i class="bi bi-person-badge me-1"></i> Vai trò:</strong
+                    >
+                    {{ user.get_role_display }}<br />
+                    <strong
+                      ><i class="bi bi-calendar3 me-1"></i> Tham gia:</strong
+                    >
+                    {{ user.date_joined|date:"d/m/Y" }}
+                  </div>
                 </div>
-                
-                <div class="col-md-6">
-                    <div class="info-card">
-                        <div class="d-flex align-items-center">
-                            <i class="me-3 bi bi-person-lines-fill"></i>
-                            <div class="info-label">Liên hệ</div>
-                        </div>
-                        <div class="info-value mt-2">
-                            <strong><i class="bi bi-telephone-fill me-2"></i>SĐT:</strong> {{ user.profile.phone|default:"Chưa cập nhật" }}<br>
-                            <strong><i class="bi bi-geo-alt-fill me-2"></i>Địa chỉ:</strong> {{ user.profile.address|default:"Chưa cập nhật" }}
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="col-md-6">
-                    <div class="info-card">
+              </div>
 
-                        <div class="d-flex align-items-center">
-                            <i class="me-3 bi bi-graph-up-arrow"></i>
-                            <div class="info-label">Hoạt động</div>
-                        </div>                        
-                        <div class="row mt-3">
-                            <div class="col-6">
-                                <div class="stat-card">
-                                    <div class="stat-number">{{ user.last_login|date:"d/m/Y"|default:"-" }}</div>
-                                    <div class="small text-muted">Truy cập cuối</div>
-                                </div>
-                            </div>
-                            <div class="col-6">
-                                <div class="stat-card">
-                                    <div class="stat-number">
-                                        {% if user.is_active %}
-                                            <span class="text-success"><i class="bi bi-check-circle-fill"></i></span>
-                                        {% else %}
-                                            <span class="text-danger"><i class="bi bi-x-circle-fill"></i></span>
-                                        {% endif %}
-                                    </div>
-                                    <div class="small text-muted">Trạng thái</div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+              <div class="col-md-6">
+                <div class="info-card">
+                  <div class="d-flex align-items-center">
+                    <i class="me-3 bi bi-person-lines-fill"></i>
+                    <div class="info-label">Liên hệ</div>
+                  </div>
+                  <div class="info-value mt-2">
+                    <strong
+                      ><i class="bi bi-telephone-fill me-2"></i>SĐT:</strong
+                    >
+                    {{ user.profile.phone|default:"Chưa cập nhật" }}<br />
+                    <strong
+                      ><i class="bi bi-geo-alt-fill me-2"></i>Địa chỉ:</strong
+                    >
+                    {{ user.profile.address|default:"Chưa cập nhật" }}
+                  </div>
                 </div>
+              </div>
 
-                <div class="col-md-6">
-                    <div class="info-card">
-                        <div class="d-flex align-items-center">
-                            <i class="me-3 bi bi-person-gear"></i>
-                            <div class="info-label">Khác</div>
-                        </div>                           
-                        <div class="info-value mt-2">
-                            <strong>Giới tính:</strong> {{ user.profile.get_sex_display|default:"-" }}<br>
-                            <strong>Ngày sinh:</strong> {{ user.profile.birthday|date:"d/m/Y"|default:"-" }}
+              <div class="col-md-6">
+                <div class="info-card">
+                  <div class="d-flex align-items-center">
+                    <i class="me-3 bi bi-graph-up-arrow"></i>
+                    <div class="info-label">Hoạt động</div> 
+                  </div>
+                  <div class="row mt-3">
+                    <div class="col-6">
+                      <div class="stat-card">
+                        <div class="stat-number">
+                          {{ user.last_login|date:"d/m/Y"|default:"-" }}
                         </div>
+                        <div class="small text-muted">Truy cập cuối</div>
+                      </div>
                     </div>
-                </div>
-                                <div class="col-md-6">
-                    <div class="info-card">
-                        <div class="d-flex align-items-center">
-                            <i class="me-3 bi bi-person-gear"></i>
-                            <div class="info-label">Bảo mật</div>
-                        </div>                           
-                        <div class="info-value mt-2">
-                            <strong>Thay đổi mật khẩu:</strong> <a class="btn btn-primary" href="{% url 'password_change' %}"></a><br>
-                            <strong>:</strong> {{ user.profile.birthday|date:"d/m/Y"|default:"-" }}
+                    <div class="col-6">
+                      <div class="stat-card">
+                        <div class="stat-number">
+                          {% if user.is_active %}
+                          <span class="text-success"
+                            ><i class="bi bi-check-circle-fill"></i
+                          ></span>
+                          {% else %}
+                          <span class="text-danger"
+                            ><i class="bi bi-x-circle-fill"></i
+                          ></span>
+                          {% endif %}
                         </div>
+                        <div class="small text-muted">Trạng thái</div>
+                      </div>
                     </div>
+                  </div>
                 </div>
+              </div>
+
+              <div class="col-md-6">
+                <div class="info-card">
+                  <div class="d-flex align-items-center">
+                    <i class="me-3 bi bi-person-gear"></i>
+                    <div class="info-label">Khác</div>
+                  </div>
+                  <div class="info-value mt-2">
+                    <strong>Giới tính:</strong> {{ user.profile.get_sex_display|default:"-" }}<br />
+                    <strong>Ngày sinh:</strong> {{ user.profile.birthday|date:"d/m/Y"|default:"-" }}
+                  </div>
+                </div>
+              </div>
+
+              <div class="col-md-6">
+                <div class="info-card">
+                  <div class="d-flex align-items-center">
+                    <i class="me-3 bi bi-shield-lock"></i>
+                    <div class="info-label">Bảo mật</div>
+                  </div>
+                  <div class="info-value mt-2">
+                    <strong>Đổi mật khẩu:</strong>
+                    <a
+                      class="btn btn-sm btn-outline-primary ms-2"
+                      href="{% url 'password_change' %}"
+                    >
+                      Thay đổi ngay
+                    </a>
+                  </div>
+                </div>
+              </div>
             </div>
+          </div>
         </div>
-    </div>
-</div>
+      </div>
 
-<div class="modal fade" id="editProfileModal" tabindex="-1">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
+      <div class="modal fade" id="editProfileModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+          <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title"><i class="bi bi-pencil-square me-2"></i>Cập nhật thông tin</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+              <h5 class="modal-title">
+                <i class="bi bi-pencil-square me-2"></i>Cập nhật thông tin
+              </h5>
+              <button
+                type="button"
+                class="btn-close"
+                data-bs-dismiss="modal"
+              ></button>
             </div>
-            <form method="post" action="{% url 'edit_profile' %}" id="profileForm">
-                {% csrf_token %}
-                <div class="modal-body">
-                    <div class="row g-3">
-                        <div class="col-md-6">
-                            <label class="form-label">Họ tên</label>
-                            <input type="text" class="form-control" name="name" value="{{ user.name }}">
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label">Giới tính</label>
-                            <select class="form-select" name="sex">
-                                <option value="M" {% if user.profile.sex == 'M' %}selected{% endif %}>Nam</option>
-                                <option value="F" {% if user.profile.sex == 'F' %}selected{% endif %}>Nữ</option>
-                                <option value="O" {% if user.profile.sex == 'O' %}selected{% endif %}>Khác</option>
-                            </select>
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label">Số điện thoại</label>
-                            <input type="tel" class="form-control" name="phone" value="{{ user.profile.phone|default:'' }}">
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label">Ngày sinh</label>
-                            <input type="date" class="form-control" name="birthday" value="{{ user.profile.birthday|date:'Y-m-d'|default:'' }}">
-                        </div>
-                        <div class="col-12">
-                            <label class="form-label">Địa chỉ</label>
-                            <input type="text" class="form-control" name="address" value="{{ user.profile.address|default:'' }}">
-                        </div>
-                    </div>
+            <form
+              method="post"
+              action="{% url 'edit_profile' %}"
+              id="profileForm"
+            >
+              {% csrf_token %}
+              <div class="modal-body">
+                <div class="row g-3">
+                  <div class="col-md-6">
+                    <label class="form-label">Họ tên</label>
+                    <input
+                      type="text"
+                      class="form-control"
+                      name="name"
+                      value="{{ user.name }}"
+                    />
+                  </div>
+                  <div class="col-md-6">
+                    <label class="form-label">Giới tính</label>
+                    <select class="form-select" name="sex">
+                      <option
+                        value="M"
+                        {%
+                        if
+                        user.profile.sex=""
+                        ="M"
+                        %}selected{%
+                        endif
+                        %}
+                      >
+                        Nam
+                      </option>
+                      <option
+                        value="F"
+                        {%
+                        if
+                        user.profile.sex=""
+                        ="F"
+                        %}selected{%
+                        endif
+                        %}
+                      >
+                        Nữ
+                      </option>
+                      <option
+                        value="O"
+                        {%
+                        if
+                        user.profile.sex=""
+                        ="O"
+                        %}selected{%
+                        endif
+                        %}
+                      >
+                        Khác
+                      </option>
+                    </select>
+                  </div>
+                  <div class="col-md-6">
+                    <label class="form-label">Số điện thoại</label>
+                    <input
+                      type="tel"
+                      class="form-control"
+                      name="phone"
+                      value="{{ user.profile.phone|default:'' }}"
+                    />
+                  </div>
+                  <div class="col-md-6">
+                    <label class="form-label">Ngày sinh</label>
+                    <input
+                      type="date"
+                      class="form-control"
+                      name="birthday"
+                      value="{{ user.profile.birthday|date:'Y-m-d'|default:'' }}"
+                    />
+                  </div>
+                  <div class="col-12">
+                    <label class="form-label">Địa chỉ</label>
+                    <input
+                      type="text"
+                      class="form-control"
+                      name="address"
+                      value="{{ user.profile.address|default:'' }}"
+                    />
+                  </div>
                 </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Đóng</button>
-                    <button type="submit" class="btn edit-btn text-white">Lưu thay đổi</button>
-                </div>
+              </div>
+              <div class="modal-footer">
+                <button
+                  type="button"
+                  class="btn btn-light"
+                  data-bs-dismiss="modal"
+                >
+                  Đóng
+                </button>
+                <button type="submit" class="btn edit-btn text-white">
+                  Lưu thay đổi
+                </button>
+              </div>
             </form>
+          </div>
         </div>
+      </div>
     </div>
+  </section>
+  <!-- Address Book -->
+  <section id="address-book" class="page-content">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+      <h3 class="fw-bold">Sổ địa chỉ giao hàng</h3>
+      <button class="btn btn-primary">
+        <i class="bi bi-plus-lg"></i> Thêm địa chỉ mới
+      </button>
+    </div>
+    <div class="row g-4">
+      <div class="col-md-6">
+        <div class="card p-3 shadow-sm border-0 bg-light">
+          <div class="form-check">
+            <input
+              class="form-check-input"
+              type="radio"
+              name="address"
+              id="homeAddress"
+              checked
+            />
+            <label class="form-check-label fw-bold" for="homeAddress"
+              >Nhà riêng (Mặc định)</label
+            >
+          </div>
+          <p class="mb-0 mt-2 ps-4">Nguyễn Minh Trí</p>
+          <p class="mb-0 text-muted small ps-4">
+            123 Đường Nguyễn Trãi, Quận 1, TP. Hồ Chí Minh
+          </p>
+          <p class="mb-0 text-muted small ps-4">Điện thoại: 0909 123 456</p>
+          <div class="mt-2 ps-4">
+            <a href="#" class="text-primary small me-3 text-decoration-none"
+              >Sửa</a
+            >
+            <a href="#" class="text-danger small text-decoration-none">Xóa</a>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-6">
+        <div class="card p-3 shadow-sm border-0">
+          <div class="form-check">
+            <input
+              class="form-check-input"
+              type="radio"
+              name="address"
+              id="officeAddress"
+            />
+            <label class="form-check-label fw-bold" for="officeAddress"
+              >Công ty</label
+            >
+          </div>
+          <p class="mb-0 mt-2 ps-4">Nguyễn Minh Trí</p>
+          <p class="mb-0 text-muted small ps-4">
+            Tòa nhà Viettel, Số 1, Đường Trần Hưng Đạo, Quận 5, TP. Hồ Chí Minh
+          </p>
+          <p class="mb-0 text-muted small ps-4">Điện thoại: 028 1234 567</p>
+          <div class="mt-2 ps-4">
+            <a href="#" class="text-primary small me-3 text-decoration-none"
+              >Sửa</a
+            >
+            <a href="#" class="text-danger small text-decoration-none">Xóa</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
 </div>
-
-      </div>
-    </section>
-
-    <!-- Address Book -->
-    <section id="address-book" class="page-content">
-      <div class="d-flex justify-content-between align-items-center mb-4">
-        <h3 class="fw-bold">Sổ địa chỉ giao hàng</h3>
-        <button class="btn btn-primary"><i class="bi bi-plus-lg"></i> Thêm địa chỉ mới</button>
-      </div>
-      <div class="row g-4">
-        <div class="col-md-6">
-          <div class="card p-3 shadow-sm border-0 bg-light">
-            <div class="form-check">
-              <input class="form-check-input" type="radio" name="address" id="homeAddress" checked />
-              <label class="form-check-label fw-bold" for="homeAddress">Nhà riêng (Mặc định)</label>
-            </div>
-            <p class="mb-0 mt-2 ps-4">Nguyễn Minh Trí</p>
-            <p class="mb-0 text-muted small ps-4">123 Đường Nguyễn Trãi, Quận 1, TP. Hồ Chí Minh</p>
-            <p class="mb-0 text-muted small ps-4">Điện thoại: 0909 123 456</p>
-            <div class="mt-2 ps-4">
-              <a href="#" class="text-primary small me-3 text-decoration-none">Sửa</a>
-              <a href="#" class="text-danger small text-decoration-none">Xóa</a>
-            </div>
-          </div>
-        </div>
-        <div class="col-md-6">
-          <div class="card p-3 shadow-sm border-0">
-            <div class="form-check">
-              <input class="form-check-input" type="radio" name="address" id="officeAddress" />
-              <label class="form-check-label fw-bold" for="officeAddress">Công ty</label>
-            </div>
-            <p class="mb-0 mt-2 ps-4">Nguyễn Minh Trí</p>
-            <p class="mb-0 text-muted small ps-4">Tòa nhà Viettel, Số 1, Đường Trần Hưng Đạo, Quận 5, TP. Hồ Chí Minh</p>
-            <p class="mb-0 text-muted small ps-4">Điện thoại: 028 1234 567</p>
-            <div class="mt-2 ps-4">
-              <a href="#" class="text-primary small me-3 text-decoration-none">Sửa</a>
-              <a href="#" class="text-danger small text-decoration-none">Xóa</a>
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
-  </div>
 {% endblock %}

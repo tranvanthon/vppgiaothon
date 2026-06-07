@@ -44,9 +44,12 @@ def order_tracking(request, order_id):
     """Trang theo dõi đơn hàng"""
     order = get_object_or_404(Order, id=order_id)
 
-    if order.customer and order.customer != request.user:
-        if not request.user.is_staff:
-            return redirect("home")
+    if (
+        order.customer
+        and order.customer != request.user
+        and request.user.role not in ["admin", "staff"]
+    ):
+        return redirect("home")
 
     timeline = get_order_timeline(order)
 
@@ -58,82 +61,9 @@ def order_tracking(request, order_id):
     return render(request, "store/cart/order_tracking.html", context)
 
 
-def order_success(request, order_id):
-    """Trang xác nhận đơn hàng thành công"""
-    order = get_object_or_404(Order, id=order_id)
-
-    # Kiểm tra quyền truy cập
-    if order.customer and order.customer != request.user:
-        if not request.user.is_staff and not request.user.is_superuser:
-            return redirect("home")
-
-    # Tạo timeline cho đơn hàng
-    timeline = {
-        "order_placed": {
-            "name": "Đơn hàng đã đặt",
-            "description": "Hệ thống đã xác nhận đơn hàng của bạn",
-            "completed": True,
-            "time": (
-                order.created_at.strftime("%d/%m/%Y - %H:%M")
-                if order.created_at
-                else None
-            ),
-        },
-        "confirmed": {
-            "name": "Đã xác nhận",
-            "description": "Đơn hàng đã được xác nhận",
-            "completed": order.status
-            in ["CONFIRMED", "PACKED", "SHIPPING", "DELIVERED", "COMPLETED"],
-            "time": (
-                order.confirmed_at.strftime("%d/%m/%Y - %H:%M")
-                if order.confirmed_at
-                else None
-            ),
-        },
-        "packed": {
-            "name": "Đã đóng gói",
-            "description": "Kiện hàng đã sẵn sàng để gửi đi",
-            "completed": order.status
-            in ["PACKED", "SHIPPING", "DELIVERED", "COMPLETED"],
-            "time": (
-                order.packed_at.strftime("%d/%m/%Y - %H:%M")
-                if order.packed_at
-                else None
-            ),
-        },
-        "shipping": {
-            "name": "Đang giao hàng",
-            "description": "Đơn hàng đang trên đường đến bạn",
-            "completed": order.status in ["SHIPPING", "DELIVERED", "COMPLETED"],
-            "time": (
-                order.shipping_at.strftime("%d/%m/%Y - %H:%M")
-                if order.shipping_at
-                else None
-            ),
-        },
-        "delivered": {
-            "name": "Giao hàng thành công",
-            "description": "Đơn hàng đã được giao",
-            "completed": order.status in ["DELIVERED", "COMPLETED"],
-            "time": (
-                order.delivered_at.strftime("%d/%m/%Y - %H:%M")
-                if order.delivered_at
-                else None
-            ),
-        },
-    }
-
-    context = {
-        "order": order,
-        "timeline": timeline,
-    }
-
-    return render(request, "order_success.html", context)
-
-
 def get_order_timeline(order):
     """Tạo timeline cho đơn hàng"""
-    timeline = {
+    timeline = { 
         "order_placed": {
             "name": "Đơn hàng đã đặt",
             "icon": "bi-receipt",
@@ -324,54 +254,6 @@ def confirm_payment(request):
         return JsonResponse({"success": False, "error": str(e)})
 
 
-def get_order_timeline(order):
-    """Tạo timeline cho đơn hàng"""
-    timeline = {
-        "order_placed": {
-            "name": "Đơn hàng đã đặt",
-            "icon": "bi-receipt",
-            "description": "Hệ thống đã xác nhận đơn hàng của bạn",
-            "completed": True,
-            "time": order.created_at.strftime("%d/%m/%Y - %H:%M"),
-        },
-        "packed": {
-            "name": "Đã đóng gói",
-            "icon": "bi-box-seam",
-            "description": "Kiện hàng đã sẵn sàng để gửi đi",
-            "completed": order.status
-            in ["packed", "shipping", "delivered", "completed"],
-            "time": (
-                order.packed_at.strftime("%d/%m/%Y - %H:%M")
-                if order.packed_at
-                else None
-            ),
-        },
-        "shipping": {
-            "name": "Đang giao hàng",
-            "icon": "bi-truck",
-            "description": "Đơn hàng đang trên đường đến bạn",
-            "completed": order.status in ["shipping", "delivered", "completed"],
-            "time": (
-                order.shipping_at.strftime("%d/%m/%Y - %H:%M")
-                if order.shipping_at
-                else None
-            ),
-        },
-        "delivered": {
-            "name": "Giao hàng thành công",
-            "icon": "bi-house-check",
-            "description": "Đơn hàng đã được giao",
-            "completed": order.status in ["delivered", "completed"],
-            "time": (
-                order.delivered_at.strftime("%d/%m/%Y - %H:%M")
-                if order.delivered_at
-                else None
-            ),
-        },
-    }
-    return timeline
-
-
 # Check out
 def checkout(request):
 
@@ -443,7 +325,7 @@ def remove_from_cart(request, item_id):
         cart_items = list(order.items.all())
         return render(
             request,
-            "partials/cart_count.html",
+            "partials/cart_update.html",
             {
                 "cart_items_count": cart_items_count,
                 "cart_items": cart_items,
@@ -518,6 +400,33 @@ class DashboardCustomerView(DashboardBaseView):
     template_name = "core/dashboard_customer.html"
     allowed_roles = ["admin", "staff", "customer"]
 
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+
+        user_orders = Order.objects.filter(customer=self.request.user).exclude(
+            status=Order.Status.DRAFT
+        )
+
+        total_spent = (
+            user_orders.filter(payment_status=Order.PaymentStatus.PAID).aggregate(
+                total=Sum("total_amount")
+            )["total"]
+            or 0
+        )
+
+        context.update(
+            {
+                "user_orders": user_orders.order_by("-created_at"),
+                "total_spent": total_spent,
+                "orders_count": user_orders.count(),
+                "shipping_count": user_orders.filter(
+                    status=Order.Status.SHIPPING
+                ).count(),
+            }
+        )
+
+        return context
+
 
 class DashboardStaffView(DashboardBaseView):
     template_name = "core/dashboard_staff.html"
@@ -543,11 +452,11 @@ class DashboardAdminView(DashboardBaseView):
             F("price") * F("quantity"),
             output_field=DecimalField(max_digits=14, decimal_places=2),
         )
-        paid_statuses = [Order.Status.PAID, Order.Status.SHIPPED]
+        paid_statuses = [Order.PaymentStatus.PAID, Order.Status.SHIPPING]
         daily_revenue = (
             OrderItem.objects.filter(
                 order__complete=True,
-                order__status__in=paid_statuses,
+                order__payment_status=Order.PaymentStatus.PAID,
                 order__created_at__date=today,
             ).aggregate(total=Sum(revenue_expression))["total"]
             or 0
@@ -555,7 +464,7 @@ class DashboardAdminView(DashboardBaseView):
         yesterday_revenue = (
             OrderItem.objects.filter(
                 order__complete=True,
-                order__status__in=paid_statuses,
+                order__payment_status=Order.PaymentStatus.PAID,
                 order__created_at__date=yesterday,
             ).aggregate(total=Sum(revenue_expression))["total"]
             or 0
@@ -587,7 +496,7 @@ class DashboardAdminView(DashboardBaseView):
                     complete=True, created_at__date=today
                 ).count(),
                 "pending_orders_count": Order.objects.filter(
-                    complete=True, status=Order.Status.DRAFT
+                    status=Order.Status.PENDING
                 ).count(),
                 "customer_count": User.objects.filter(role="customer").count(),
                 "new_customers_today": User.objects.filter(

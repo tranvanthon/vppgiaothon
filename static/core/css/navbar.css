@@ -74,7 +74,7 @@
     transform: translateY(10px);
 }
 
-/* Cart Item Styles - ĐÃ SỬA */
+/* Cart Item Styles */
 .cart-item-mini {
     display: flex;
     gap: 12px;

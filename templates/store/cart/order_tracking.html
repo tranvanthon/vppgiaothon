@@ -1,0 +1,397 @@
+{% extends 'base.html' %}
+{% load format_filter %}
+
+{% block content %}
+  <style>
+    /* Thank You & Tracking Styles */
+    .thankyou-container {
+      padding: 60px 0;
+      background-color: #f8f9fa;
+      min-height: calc(100vh - 200px);
+    }
+    
+    .success-icon {
+      font-size: 5rem;
+      color: var(--bs-primary);
+      margin-bottom: 20px;
+      display: inline-block;
+      animation: scaleUp 0.5s ease-out;
+    }
+    
+    .order-number {
+      background: #e9ecef;
+      padding: 10px 20px;
+      border-radius: 50px;
+      font-weight: 700;
+      color: var(--bs-blue);
+      display: inline-block;
+    }
+    
+    .info-card {
+      background: #fff;
+      border-radius: 15px;
+      padding: 30px;
+      border: 1px solid #dee2e6;
+      text-align: left;
+      margin-top: 30px;
+    }
+    
+    .tracking-wrapper {
+      padding: 40px 0;
+      background-color: #f8f9fa;
+    }
+    
+    .tracking-timeline {
+      position: relative;
+      padding: 20px 0;
+      list-style: none;
+    }
+    
+    .tracking-timeline::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      left: 40px;
+      width: 2px;
+      background: #dee2e6;
+    }
+    
+    .tracking-item {
+      position: relative;
+      margin-bottom: 30px;
+      padding-left: 80px;
+    }
+    
+    .tracking-icon {
+      position: absolute;
+      left: 25px;
+      width: 32px;
+      height: 32px;
+      background: #fff;
+      border: 2px solid #dee2e6;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 2;
+      color: #888;
+    }
+    
+    .tracking-item.active .tracking-icon {
+      background: var(--bs-primary);
+      border-color: var(--bs-primary);
+      color: #fff;
+      box-shadow: 0 0 0 5px rgba(var(--bs-primary-rgb), 0.1);
+    }
+    
+    .tracking-item.active .tracking-content h6 {
+      color: var(--bs-primary);
+    }
+    
+    .tracking-date {
+      font-size: 0.75rem;
+      color: #888;
+    }
+    
+    @keyframes scaleUp {
+      0% {
+        transform: scale(0);
+      }
+      100% {
+        transform: scale(1);
+      }
+    }
+    
+    @media (max-width: 768px) {
+      .tracking-timeline::before {
+        left: 20px;
+      }
+      .tracking-item {
+        padding-left: 55px;
+      }
+      .tracking-icon {
+        left: 5px;
+        width: 28px;
+        height: 28px;
+        font-size: 0.8rem;
+      }
+    }
+    
+    /* In ấn */
+    @media print {
+      .thankyou-container {
+        padding: 20px 0;
+      }
+      .tracking-wrapper {
+        break-inside: avoid;
+      }
+      .btn,
+      .card-footer,
+      .mt-5.d-flex {
+        display: none !important;
+      }
+      .card {
+        box-shadow: none !important;
+        border: 1px solid #ddd !important;
+      }
+    }
+  </style>
+
+  <div class="thankyou-container">
+    <div class="container">
+      <div class="row justify-content-center">
+        <div class="col-lg-6">
+          <div class="text-center">
+            <div class="success-icon">
+              <i class="bi bi-check-circle-fill"></i>
+            </div>
+
+            <h2 class="fw-bold mb-3">Đặt hàng thành công!</h2>
+            <p class="text-muted mb-4">
+              Cảm ơn bạn đã tin tưởng mua sắm tại <strong>E-STORE</strong>. Đơn hàng của bạn đã được tiếp nhận và đang trong quá trình xử lý.
+            </p>
+
+            <div class="order-number mb-4">Mã đơn hàng: {{ order.order_number }}</div>
+
+            <div class="info-card shadow-sm">
+              <h6 class="fw-bold mb-3 border-bottom pb-2">Thông tin đơn hàng</h6>
+              <div class="d-flex justify-content-between mb-2 small">
+                <span class="text-muted">Người nhận:</span>
+                <span class="fw-bold">{{ order.full_name }}</span>
+              </div>
+              <div class="d-flex justify-content-between mb-2 small">
+                <span class="text-muted">Số điện thoại:</span>
+                <span>{{ order.phone }}</span>
+              </div>
+              <div class="d-flex justify-content-between mb-2 small">
+                <span class="text-muted">Địa chỉ:</span>
+                <span>{{ order.full_address|default:order.address }}</span>
+              </div>
+              <div class="d-flex justify-content-between mb-2 small">
+                <span class="text-muted">Hình thức thanh toán:</span>
+                <span>{{ order.get_payment_method_display }}</span>
+              </div>
+              <div class="d-flex justify-content-between mb-2 small">
+                <span class="text-muted">Trạng thái thanh toán:</span>
+                <span class="{% if order.payment_status == 'PAID' %}
+                    text-success
+                  {% elif order.payment_status == 'PENDING' %}
+                    text-warning
+                  {% else %}
+                    text-muted
+                  {% endif %}">
+                  {{ order.get_payment_status_display }}
+                </span>
+              </div>
+
+              <!-- Chi tiết tổng tiền - Dùng đúng field từ model -->
+              <div class="border-top pt-2 mt-2">
+                <div class="d-flex justify-content-between mb-1 small">
+                  <span class="text-muted">Tạm tính:</span>
+                  <span>{{ order.subtotal|dot_thousands }}đ</span>
+                </div>
+                {% if order.shipping_fee > 0 %}
+                  <div class="d-flex justify-content-between mb-1 small">
+                    <span class="text-muted">Phí vận chuyển:</span>
+                    <span>{{ order.shipping_fee|dot_thousands }}đ</span>
+                  </div>
+                {% endif %}
+                {% if order.discount_amount > 0 %}
+                  <div class="d-flex justify-content-between mb-1 small">
+                    <span class="text-muted">Giảm giá:</span>
+                    <span class="text-danger">-{{ order.discount_amount|dot_thousands }}đ</span>
+                  </div>
+                {% endif %}
+                {% if order.coupon_discount > 0 %}
+                  <div class="d-flex justify-content-between mb-1 small">
+                    <span class="text-muted">Mã giảm giá ({{ order.coupon_code }}):</span>
+                    <span class="text-danger">-{{ order.coupon_discount|dot_thousands }}đ</span>
+                  </div>
+                {% endif %}
+                <div class="d-flex justify-content-between mt-2 pt-1 border-top">
+                  <span class="fw-bold">Tổng thanh toán:</span>
+                  <span class="fw-bold text-danger fs-5">{{ order.total_amount|dot_thousands }}đ</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="mt-5 d-flex gap-3 justify-content-center">
+              <a href="/" class="btn btn-primary px-4 rounded-pill">Tiếp tục mua sắm</a>
+              <button onclick="window.print()" class="btn btn-outline-secondary px-4 rounded-pill"><i class="bi bi-printer me-1"></i> In hóa đơn</button>
+            </div>
+
+            <p class="small text-muted mt-5">
+              Một email xác nhận đã được gửi đến địa chỉ của bạn. Nếu có bất kỳ thắc mắc nào, vui lòng liên hệ hotline <strong>1900 1234</strong>.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Theo dõi đơn hàng (Timeline) -->
+  <div class="tracking-wrapper">
+    <div class="container">
+      <div class="row justify-content-center">
+        <div class="col-lg-8">
+          <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
+            <div class="card-header bg-white p-4 border-bottom-0">
+              <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+                <div>
+                  <h4 class="fw-bold mb-1">Chi tiết đơn hàng #{{ order.order_number }}</h4>
+                  <p class="text-muted small mb-0">Ngày đặt: {{ order.created_at|date:'d/m/Y' }} | {{ order.created_at|time:'H:i' }}</p>
+                </div>
+                <span class="badge bg-primary-subtle text-primary px-3 py-2 rounded-pill">{{ order.get_status_display }}</span>
+              </div>
+            </div>
+
+            <div class="card-body p-4 pt-0">
+              <hr class="opacity-10" />
+
+              <div class="row">
+                <div class="col-md-7 border-end">
+                  <h6 class="fw-bold mb-4">Trạng thái vận chuyển</h6>
+                  <div class="tracking-timeline">
+                    <!-- Đơn hàng đã đặt -->
+                    <div class="tracking-item {% if timeline.order_placed.completed %}active{% endif %}">
+                      <div class="tracking-icon">
+                        <i class="bi bi-receipt"></i>
+                      </div>
+                      <div class="tracking-content">
+                        <h6 class="mb-1 fw-bold">{{ timeline.order_placed.name }}</h6>
+                        <p class="small text-muted mb-0">{{ timeline.order_placed.description }}</p>
+                        {% if timeline.order_placed.time %}
+                          <span class="tracking-date">{{ timeline.order_placed.time }}</span>
+                        {% endif %}
+                      </div>
+                    </div>
+
+                    <!-- Đã xác nhận -->
+                    <div class="tracking-item {% if timeline.confirmed.completed %}active{% endif %}">
+                      <div class="tracking-icon">
+                        <i class="bi bi-check-circle"></i>
+                      </div>
+                      <div class="tracking-content">
+                        <h6 class="mb-1 fw-bold">{{ timeline.confirmed.name }}</h6>
+                        <p class="small text-muted mb-0">{{ timeline.confirmed.description }}</p>
+                        {% if timeline.confirmed.time %}
+                          <span class="tracking-date">{{ timeline.confirmed.time }}</span>
+                        {% endif %}
+                      </div>
+                    </div>
+
+                    <!-- Đã đóng gói -->
+                    <div class="tracking-item {% if timeline.packed.completed %}active{% endif %}">
+                      <div class="tracking-icon">
+                        <i class="bi bi-box-seam"></i>
+                      </div>
+                      <div class="tracking-content">
+                        <h6 class="mb-1 fw-bold">{{ timeline.packed.name }}</h6>
+                        <p class="small text-muted mb-0">{{ timeline.packed.description }}</p>
+                        {% if timeline.packed.time %}
+                          <span class="tracking-date">{{ timeline.packed.time }}</span>
+                        {% endif %}
+                      </div>
+                    </div>
+
+                    <!-- Đang giao hàng -->
+                    <div class="tracking-item {% if timeline.shipping.completed %}active{% endif %}">
+                      <div class="tracking-icon">
+                        <i class="bi bi-truck"></i>
+                      </div>
+                      <div class="tracking-content">
+                        <h6 class="mb-1 fw-bold">{{ timeline.shipping.name }}</h6>
+                        <p class="small text-muted mb-0">{{ timeline.shipping.description }}</p>
+                        {% if timeline.shipping.time %}
+                          <span class="tracking-date">{{ timeline.shipping.time }}</span>
+                        {% endif %}
+                      </div>
+                    </div>
+
+                    <!-- Giao hàng thành công -->
+                    <div class="tracking-item {% if timeline.delivered.completed %}active{% endif %}">
+                      <div class="tracking-icon">
+                        <i class="bi bi-house-check"></i>
+                      </div>
+                      <div class="tracking-content">
+                        <h6 class="mb-1 fw-bold">{{ timeline.delivered.name }}</h6>
+                        <p class="small text-muted mb-0">{{ timeline.delivered.description }}</p>
+                        {% if timeline.delivered.time %}
+                          <span class="tracking-date">{{ timeline.delivered.time }}</span>
+                        {% endif %}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="col-md-5 ps-md-4">
+                  <div class="mb-4">
+                    <h6 class="fw-bold mb-3 small text-uppercase text-muted">Địa chỉ nhận hàng</h6>
+                    <p class="small fw-bold mb-1">{{ order.full_name }}</p>
+                    <p class="small text-muted mb-0">
+                      {{ order.phone }}<br />
+                      {{ order.full_address|default:order.address }}
+                    </p>
+                  </div>
+
+                  <div>
+                    <h6 class="fw-bold mb-3 small text-uppercase text-muted">Sản phẩm</h6>
+                    {% for item in order.items.all %}
+                      <div class="d-flex align-items-center mb-2">
+                        <img src="{{ item.product.main_image_url }}" class="rounded me-2" alt="{{ item.product_name|default:item.product.name }}" width="40" height="40" style="object-fit: cover;" />
+                        <div class="small flex-grow-1">
+                          <p class="mb-0 text-truncate" style="max-width: 150px;">{{ item.product_name|default:item.product.name }}</p>
+                          <span class="text-muted">x{{ item.quantity }}</span>
+                        </div>
+                        <span class="ms-auto fw-bold small">{{ item.total_price|dot_thousands }}đ</span>
+                      </div>
+                    {% endfor %}
+                    <hr class="my-2" />
+
+                    <!-- Tổng tiền chi tiết - Dùng đúng field từ model -->
+                    <div class="small">
+                      <div class="d-flex justify-content-between mb-1">
+                        <span class="text-muted">Tạm tính:</span>
+                        <span>{{ order.subtotal|dot_thousands }}đ</span>
+                      </div>
+                      {% if order.shipping_fee > 0 %}
+                        <div class="d-flex justify-content-between mb-1">
+                          <span class="text-muted">Phí vận chuyển:</span>
+                          <span>{{ order.shipping_fee|dot_thousands }}đ</span>
+                        </div>
+                      {% endif %}
+                      {% if order.discount_amount > 0 %}
+                        <div class="d-flex justify-content-between mb-1">
+                          <span class="text-muted">Giảm giá:</span>
+                          <span class="text-danger">-{{ order.discount_amount|dot_thousands }}đ</span>
+                        </div>
+                      {% endif %}
+                      {% if order.coupon_discount > 0 %}
+                        <div class="d-flex justify-content-between mb-1">
+                          <span class="text-muted">Mã giảm giá ({{ order.coupon_code }}):</span>
+                          <span class="text-danger">-{{ order.coupon_discount|dot_thousands }}đ</span>
+                        </div>
+                      {% endif %}
+                    </div>
+
+                    <hr class="my-2" />
+                    <div class="d-flex justify-content-between fw-bold">
+                      <span>Tổng thanh toán:</span>
+                      <span class="text-danger">{{ order.total_amount|dot_thousands }}đ</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="card-footer bg-light p-3 border-0 text-center">
+              <button class="btn btn-sm btn-outline-primary rounded-pill me-2" onclick="window.location.href='/support'"><i class="bi bi-chat-dots me-1"></i> Liên hệ hỗ trợ</button>
+              <button class="btn btn-sm btn-outline-secondary rounded-pill" onclick="window.print()"><i class="bi bi-printer me-1"></i> In hóa đơn</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+{% endblock %}

@@ -18,6 +18,8 @@
         </div>
         <div class="row g-3 g-md-4">
           {% for category in featured_categories %}
+
+          
             <div class="col-6 col-md-3">
               <a href="{% url 'store:category_detail' category.slug %}" class="cat-item">
                 <span class="cat-icon">
