@@ -471,6 +471,25 @@ class Order(models.Model):
     def __str__(self):
         return f"ĐH-{self.order_number}"
 
+    # đổi màu trạng thái giao hàng
+    @property
+    def status_badge_class(self):
+
+        mapping = {
+            self.Status.PENDING: "bg-warning-subtle text-warning",
+            self.Status.CONFIRMED: "bg-info-subtle text-info",
+            self.Status.PACKED: "bg-secondary-subtle text-secondary",
+            self.Status.SHIPPING: "bg-primary-subtle text-primary",
+            self.Status.DELIVERED: "bg-success-subtle text-success",
+            self.Status.COMPLETED: "bg-success",
+            self.Status.CANCELLED: "bg-danger-subtle text-danger",
+        }
+
+        return mapping.get(
+            self.status,
+            "bg-light text-dark",
+        )
+
     def add_product(self, product, quantity=1):
 
         price = product.price_sale

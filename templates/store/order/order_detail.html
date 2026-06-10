@@ -1,0 +1,202 @@
+{% extends "base.html" %}
+{% load format_filter %}
+
+{% block content %}
+<div class="container py-4">
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+
+        <div>
+            <h3 class="mb-1">
+                Đơn hàng #{{ order.order_number }}
+            </h3>
+
+            <small class="text-muted">
+                Ngày đặt:
+                {{ order.created_at|date:"d/m/Y H:i" }}
+            </small>
+        </div>
+
+        <div>
+            <span class="badge bg-primary">
+                {{ order.status_display }}
+            </span>
+        </div>
+
+    </div>
+
+    <div class="row">
+
+        <!-- Thông tin khách hàng -->
+        <div class="col-lg-6">
+
+            <div class="card mb-4">
+
+                <div class="card-header">
+                    <strong>Thông tin khách hàng</strong>
+                </div>
+
+                <div class="card-body">
+
+                    <p>
+                        <strong>Họ tên:</strong>
+                        {{ order.full_name }}
+                    </p>
+
+                    <p>
+                        <strong>Số điện thoại:</strong>
+                        {{ order.phone }}
+                    </p>
+
+                    <p>
+                        <strong>Email:</strong>
+                        {{ order.email|default:"-" }}
+                    </p>
+
+                </div>
+
+            </div>
+
+        </div>
+
+        <!-- Địa chỉ -->
+        <div class="col-lg-6">
+
+            <div class="card mb-4">
+
+                <div class="card-header">
+                    <strong>Địa chỉ giao hàng</strong>
+                </div>
+
+                <div class="card-body">
+
+                    <p>
+                        {{ order.full_address|default:order.address }}
+                    </p>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <!-- Danh sách sản phẩm -->
+
+    <div class="card mb-4">
+
+        <div class="card-header">
+            <strong>Sản phẩm</strong>
+        </div>
+
+        <div class="card-body p-0">
+
+            <table class="table mb-0">
+
+                <thead>
+                    <tr>
+                        <th>Sản phẩm</th>
+                        <th>Số lượng</th>
+                        <th>Đơn giá</th>
+                        <th>Thành tiền</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+
+                    {% for item in order.items.all %}
+
+                    <tr>
+
+                        <td>
+                            {{ item.product.name }}
+                        </td>
+
+                        <td>
+                            {{ item.quantity }}
+                        </td>
+
+                        <td>
+                            {{ item.price|dot_thousands }}đ
+                        </td>
+
+                        <td>
+                            {{ item.total_price|dot_thousands }}đ
+                        </td>
+
+                    </tr>
+
+                    {% endfor %}
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+    </div>
+
+    <!-- Thanh toán -->
+
+    <div class="card mb-4">
+
+        <div class="card-header">
+            <strong>Thanh toán</strong>
+        </div>
+
+        <div class="card-body">
+
+            <p>
+                <strong>Phương thức:</strong>
+                {{ order.payment_method_display }}
+            </p>
+
+            <p>
+                <strong>Trạng thái:</strong>
+                {{ order.payment_status_display }}
+            </p>
+
+            <hr>
+
+            <div class="d-flex justify-content-between">
+                <span>Tạm tính</span>
+                <span>{{ order.subtotal|dot_thousands }}đ</span>
+            </div>
+
+            <div class="d-flex justify-content-between">
+                <span>Phí vận chuyển</span>
+                <span>{{ order.shipping_fee|dot_thousands }}đ</span>
+            </div>
+
+            <hr>
+
+            <div class="d-flex justify-content-between fw-bold fs-5">
+                <span>Tổng tiền</span>
+                <span class="text-danger">
+                    {{ order.total_amount|dot_thousands }}đ
+                </span>
+            </div>
+
+        </div>
+
+    </div>
+
+    <!-- Ghi chú -->
+
+    {% if order.note %}
+    <div class="card mb-4">
+
+        <div class="card-header">
+            <strong>Ghi chú khách hàng</strong>
+        </div>
+
+        <div class="card-body">
+            {{ order.note }}
+        </div>
+
+    </div>
+    {% endif %}
+
+</div>
+{% endblock %}

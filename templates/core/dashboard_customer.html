@@ -1,8 +1,7 @@
 {% extends 'base.html' %}
 {% load format_filter %}
 {% block navbar %}
-  {% include
-  'partials/navbar.html' %}
+  {% include 'partials/navbar.html' %}
 {% endblock %}
 {% block content %}
   <div class="sidebar shadow-sm">
@@ -90,7 +89,6 @@
               </tr>
             </thead>
             <tbody>
-              <th>thon</th>
               {% for order in user_orders %}
                 <tr>
                   <td>
@@ -100,24 +98,15 @@
                   <td>Tai nghe Bluetooth x{{ order.items_count }}</td>
                   <td>{{ order.total_amount|dot_thousands }}đ</td>
                   <td>
-                    <span class="badge bg-warning-subtle text-warning">{{ order.status_display }}</span {{ order.status }}>
-                    </td>
+                    <span class="badge {{ order.status_badge_class }}">
+                        {{ order.status_display }}
+                    </span>
+                </td>
                     <td>
                       <a href="{% url 'store:order_tracking' order.id %}"
                          class="btn btn-sm btn-outline-primary">
                         Theo dõi
                       </a>
-                    </td>
-                  </tr>
-                  <tr>
-                    <td>
-                      <span class="fw-bold">#ORD-9812</span>
-                    </td>
-                    <td>05/03/2026</td>
-                    <td>Đồng hồ SmartWatch x1</td>
-                    <td>2.450.000đ</td>
-                    <td>
-                      <span class="badge bg-success-subtle text-success">Đã giao</span>
                     </td>
                     <td>
                       <button class="btn btn-sm btn-outline-secondary">
@@ -125,11 +114,18 @@
                       </button>
                     </td>
                   </tr>
-                {% endfor %}
-              </tbody>
-            </table>
+   
+                  {% empty %}
+                </tbody>
+              </table>
+              <div class="col-12 text-center py-5">
+            <p class="text-muted mb-0">
+              Bạn không có đơn hàng nào ở thời điểm hiện tại.
+            </p>
           </div>
-        </div>
+        {% endfor %}
+            </div>
+          </div>
       </section>
       <!-- Wishlist -->
       <section id="wishlist" class="page-content">

@@ -1,0 +1,80 @@
+{% extends "base.html" %}
+{% block title %}
+{{order.product_name }}
+{% endblock title %}
+{% block navbar %}
+    {% include "partials/navbar.html" %}
+{% endblock navbar %}
+{% block content %}
+    
+<div class="container py-4">
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>Quản lý đơn hàng</h2>
+    </div>
+
+    <div class="card shadow-sm">
+
+        <div class="card-body">
+
+            <table class="table table-hover align-middle">
+                <thead>
+                    <tr>
+                        <th>Số thứ tự</th>
+                        <th>Số đơn hàng</th>
+                        <th>Họ và tên</th>
+                        <th>Tổng số lượng </th>
+                        <th>Trạng thái</th>
+                        <th>Thao tác</th>
+                        <th>Ghi chú</th>
+                    </tr>
+                </thead>
+                <tbody>
+
+                    {% for order in orders %}
+                    <tr>
+                        <td></td>
+                        <td>
+                            {{order.order_number}}
+                        </td>
+
+                        <td>
+                            {{order.full_name}}
+                        </td>
+
+                        <td>
+                           {{order.total_amount}}
+                        </td>
+
+
+                        <td>
+                            {{order.status_display}}
+                        </td>
+                        <td>
+                            <a href="{% url "store:order_detail" order.pk %}" class="btn btn-sm btn-info">
+                                Chi tiết
+                            </a>
+                        </td>
+                        <td>
+
+                        </td>
+
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="5">
+                            Không có dữ liệu.
+                        </td>
+                    </tr>
+                    {% endfor %}
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+    </div>
+
+</div>
+{% endblock content %}

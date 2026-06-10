@@ -14,7 +14,14 @@ urlpatterns = [
     path("cart/detail/", views.cart_detail, name="cart_detail"),
     path("cart/add/<slug:slug>/", views.add_to_cart, name="add_to_cart"),
     path("cart/remove/<int:item_id>/", views.remove_from_cart, name="remove_from_cart"),
-    # Dashboards hệ thống
+    # Process Order
+    path("dashboard/staff/orders/", views.OrderListView.as_view(), name="order_list"),
+    path(
+        "dashboard/staff/orders<int:pk>/",
+        views.OrderDetailView.as_view(),
+        name="order_detail",
+    ),
+    # Dashboards
     path(
         "admin-dashboard/", views.DashboardAdminView.as_view(), name="admin_dashboard"
     ),

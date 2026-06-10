@@ -34,9 +34,6 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     # Cần cho domain name
     "django.contrib.sites",
-    # sripy and boostrap
-    "crispy_forms",
-    "crispy_bootstrap5",
     # allauth
     "allauth",
     "allauth.account",

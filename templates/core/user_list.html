@@ -1,0 +1,134 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container py-4">
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>Quản lý tài khoản</h2>
+    </div>
+
+    <div class="card shadow-sm">
+
+        <div class="card-body">
+
+            <table class="table table-hover align-middle">
+
+                <thead>
+                    <tr>
+                        <th>Email</th>
+                        <th>Tên</th>
+                        <th>Vai trò</th>
+                        <th>Trạng thái</th>
+                        <th>Quyền</th>
+                        <th>Tài khoản</th>
+                        <th>Ngày tham gia</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+
+                    {% for user in users %}
+                    <tr>
+
+                        <td>
+                            {{ user.email }}
+                        </td>
+
+                        <td>
+                            {{ user.name|default:"-" }}
+                        </td>
+
+                        <td>
+
+                            {% if user.role == "admin" %}
+                                <span class="badge bg-danger">
+                                    Admin
+                                </span>
+
+                            {% elif user.role == "staff" %}
+                                <span class="badge bg-primary">
+                                    Staff
+                                </span>
+
+                            {% else %}
+                                <span class="badge bg-secondary">
+                                    Customer
+                                </span>
+
+                            {% endif %}
+
+                        </td>
+
+
+                        <td>
+
+                            {% if user.is_active %}
+                                <span class="badge bg-success">
+                                    Hoạt động
+                                </span>
+                            {% else %}
+                                <span class="badge bg-danger">
+                                    Đã khóa
+                                </span>
+                            {% endif %}
+
+                        </td>
+                        <td>
+                            {% if not user.is_superuser %}
+                            <form action="{% url 'user_role_update' user.id %}" method="post">
+                                {% csrf_token %}
+                                {% if user.role == "customer" %}
+                                    <button class="btn btn-sm btn-primary" type="submit">
+                                        Cấp quyền nhân viên
+                                    </button>
+                                {% elif user.role == "staff" %}
+                                    <button type="submit" class="btn btn-sm btn-warning">
+                                        Hủy quyền Nhân viên
+                                    </button>                              
+                                {% endif %}
+                            </form>
+                            {% else %}
+                            <span class="text-muted">
+                                Superuser
+                            </span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if not user.is_superuser %}
+                            <form action="{% url 'user_toggle_active' user.id %}" method="post">
+                                {% csrf_token %}
+                                {% if user.is_active %}
+                                <button class="btn btn-sm btn-danger">
+                                    Khóa
+                                </button>
+                                {% else %}
+                                <button class="btn btn-sm btn-success">
+                                    Mở khóa
+                                </button>
+                                {% endif %}
+                            </form>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {{ user.date_joined|date:"d/m/Y H:i" }}
+                        </td>
+
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="5">
+                            Không có dữ liệu.
+                        </td>
+                    </tr>
+                    {% endfor %}
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+    </div>
+
+</div>
+{% endblock %}

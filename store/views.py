@@ -39,6 +39,34 @@ import json, uuid
 from django.views.decorators.csrf import csrf_exempt
 
 
+# Order again
+class OrderDetailView(RoleRequiredMixin, DetailView):
+    model = Order
+    template_name = "store/order/order_detail.html"
+    allowed_roles = ["staff", "admin"]
+    context_object_name = "order"
+
+    def get_queryset(self):
+        return Order.objects.select_related("customer").prefetch_related(
+            "items", "items__product"
+        )
+
+
+class OrderListView(RoleRequiredMixin, ListView):
+    model = Order
+    template_name = "store/order/order_list.html"
+    context_object_name = "orders"
+    allowed_roles = ["staff", "admin"]
+
+    def get_queryset(self):
+        qs = (
+            Order.objects.exclude(status=Order.Status.DRAFT)
+            .select_related("customer")
+            .order_by("-created_at")
+        )
+        return qs
+
+
 # Cart
 def order_tracking(request, order_id):
     """Trang theo dõi đơn hàng"""
@@ -63,7 +91,7 @@ def order_tracking(request, order_id):
 
 def get_order_timeline(order):
     """Tạo timeline cho đơn hàng"""
-    timeline = { 
+    timeline = {
         "order_placed": {
             "name": "Đơn hàng đã đặt",
             "icon": "bi-receipt",
@@ -238,7 +266,7 @@ def confirm_payment(request):
         # Cập nhật trạng thái thanh toán
         order.payment_status = Order.PaymentStatus.PAID
         order.status = Order.Status.CONFIRMED
-        order.paid_at = timezone.now()
+        order.confirmed_at = timezone.now()
         order.save()
 
         return JsonResponse(
