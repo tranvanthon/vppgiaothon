@@ -51,6 +51,13 @@
             <div class="col-6 col-md-4 col-lg-3">
               {% include 'partials/product_cart.html' %}
             </div>
+          {% empty %}
+            <div class="col-12">
+              <div class="alert alert-light border text-center py-4 mb-0" role="status">
+                <i class="bi bi-bag-check fs-3 text-muted d-block mb-2"></i>
+                <p class="text-muted mb-0">Chưa có sản phẩm bán chạy.</p>
+              </div>
+            </div>
           {% endfor %}
         </div>
       </div>
@@ -69,6 +76,13 @@
           {% for product in latest_products %}
             <div class="col-6 col-md-4 col-lg-3">
               {% include 'partials/product_cart.html' %}
+            </div>
+          {% empty %}
+            <div class="col-12">
+              <div class="alert alert-light border text-center py-4 mb-0" role="status">
+                <i class="bi bi-box-seam fs-3 text-muted d-block mb-2"></i>
+                <p class="text-muted mb-0">Chưa có sản phẩm mới.</p>
+              </div>
             </div>
           {% endfor %}
         </div>

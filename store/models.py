@@ -143,7 +143,7 @@ class Category(ImageOptimizationsMixin, MPTTModel):
 
     def get_grouped_products(self, limit=12, **kwargs):
         grouped_data = []
-        children = self.children.filter(is_active=True)
+        children = self.children.filter(is_active=True)  # type: ignore
         targets = children if children.exists() else [self]
 
         for child in targets:
